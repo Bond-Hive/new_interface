@@ -26,48 +26,13 @@ import { ethers } from "ethers";
 import { stroopToXlm, xlmToStroop } from "../helpers/format";
 import { ERRORS } from "../helpers/error";
 import { pool } from "../constants/poolOptions";
+import WithdrawFunds from "../components/modals/withdraw";
 
 const MainDapp = () => {
   const {setConnectorWalletAddress, connectorWalletAddress, poolReserve, setPoolReserve,transactionsStatus,setSelectedPool, selectedPool} = UseStore()
   const [openState, setOpenState] = useState(false)
-  // const pool = [
-  //   {
-  //     name: "ethereum",
-  //     ticker: "ETH",
-  //     img: EthBgWhiteLogo,
-  //     apy: 12.45,
-  //     depositAsset: "USDT/USDC",
-  //     minimum: 100,
-  //     maturity: "28th, June 2024",
-  //   },
-  //   {
-  //     name: "bitcoin",
-  //     ticker: "BTC",
-  //     img: BTCBgLogo,
-  //     apy: 19.62,
-  //     depositAsset: "USDT/USDC",
-  //     minimum: 3000,
-  //     maturity: "2nd, March 2024",
-  //   },
-  //   {
-  //     name: "ethereum",
-  //     ticker: "ETH",
-  //     img: EthBgWhiteLogo,
-  //     apy: 12.45,
-  //     depositAsset: "USDT/USDC",
-  //     minimum: 100,
-  //     maturity: "28th, June 2024",
-  //   },
-  //   {
-  //     name: "bitcoin",
-  //     ticker: "BTC",
-  //     img: BTCBgLogo,
-  //     apy: 19.62,
-  //     depositAsset: "USDT/USDC",
-  //     minimum: 3000,
-  //     maturity: "2nd, March 2024",
-  //   },
-  // ];
+  const [openWithdrawState, setOpenWithdrawState] = useState(false)
+  const [shareBalance, setShareBalance] = useState("0")
   const [selectedNetwork] = React.useState(TESTNET_DETAILS);
   const getReserveContractCal = async (
     id: string,
@@ -83,7 +48,7 @@ const MainDapp = () => {
     }
     const tx = txBuilder
       .addOperation(
-        contract.call("get_rsrvs"),
+        contract.call("reserves"),
       )
       .setTimeout(30)
       .build();
@@ -109,18 +74,62 @@ const MainDapp = () => {
     return poolReserve
   }
 
+  // Share Balance
+  const getShareCont = async (
+    id: string,
+    txBuilder: TransactionBuilder,
+    connection: any,
+    destinationPubKey: string | null = null
+  ) => {
+    console.log("id", id);
+    const contract = new Contract(id);
+    if (!destinationPubKey) {
+      console.log("destinationPubKey is null");
+      return false;
+    }
+    const tx = txBuilder
+      .addOperation(
+        contract.call(
+          "balance",
+          ...[
+            accountToScVal(destinationPubKey), // id
+          ]
+        )
+      )
+      .setTimeout(30)
+      .build();
+
+    const result = await simulateTx<string>(tx, connection);
+    console.log("result", result);
+    console.log("result.toString()", result.toString());
+    return ethers.formatUnits(result, 7);
+  };
+  const getShareBalance = async (poolIndex: number) => {
+    const txBuilderBalance = await getTxBuilder(
+      connectorWalletAddress!,
+      BASE_FEE,
+      provider,
+      selectedNetwork.networkPassphrase
+    );
+
+    const shareBalance: any = await getShareCont(pool[poolIndex].shareId, txBuilderBalance, provider, connectorWalletAddress);
+    setShareBalance(shareBalance)
+    console.log({shareBalance});
+    return shareBalance
+  }
+
 
   useEffect(() => {
     console.log({connectorWalletAddress})
     if(connectorWalletAddress){
       pool.forEach((pool, index) =>{
         getPoolReserve(index)
+        getShareBalance(index)
       } )
     }
   }, [connectorWalletAddress, transactionsStatus])
 
 
-  console.log({selectedPool})
   return (
     <>
     <div className="dapp">
@@ -350,8 +359,9 @@ const MainDapp = () => {
                         <p className="text-darkPrimText text-sm mt-2">Minimum <span className="text-blueish">$100</span></p>
                       </div>
                     </div>
+                    <div className="flex gap-2 items-center">
                     <button
-                      className={` button1 inline-flex items-center px-9 py-[4px] gap-1`}
+                      className={` button1 inline-flex items-center px-9 py-[4px] gap-1 ${!connectorWalletAddress && "hover:bg-transparent"}`}
                       onClick={() => {
                         setOpenState(true)
                         setSelectedPool(pool)
@@ -367,6 +377,17 @@ const MainDapp = () => {
                         alt="chervonRight"
                       />
                     </button>
+                    <button
+                      className={` button1 inline-flex items-center px-9 py-[4px] gap-1 ${Number(shareBalance) <= 0 || !connectorWalletAddress && "hover:bg-transparent"}`}
+                      onClick={() => {
+                        setOpenWithdrawState(true)
+                        setSelectedPool(pool)
+                      }}
+                      disabled={!connectorWalletAddress || Number(shareBalance) <= 0}
+                    >
+                      <p className="text-sm">My position</p>
+                    </button>
+                    </div>
                   </div>
                   <div className="APY text-blueish  w-3/12">
                     <h1 className="text-lg mb-1 ">{pool.apy}%</h1>
@@ -514,6 +535,22 @@ const MainDapp = () => {
                       alt="chervonRight"
                     />
                   </button>
+                  <button
+                    className={`w-full button1 flex items-center justify-center px-9 py-3 gap-1 mt-3 ${Number(shareBalance) <= 0 && "hover:bg-transparent"}`}
+                    onClick={() => {
+                      setOpenWithdrawState(true)
+                      setSelectedPool(pool)
+                    }}
+                    disabled={Number(shareBalance) <= 0}
+                  >
+                    <p className="text-sm">My Position</p>
+                    <Image
+                      src={chervonRight}
+                      width={13}
+                      height={13}
+                      alt="chervonRight"
+                    />
+                  </button>
                 </div>
               ))}
             </div>
@@ -525,6 +562,9 @@ const MainDapp = () => {
 
     {
       openState &&     <DepositFunds setOpenState={setOpenState}/>
+    }
+    {
+      openWithdrawState && <WithdrawFunds setOpenState={setOpenWithdrawState} shareBalance={shareBalance}/>
     }
     </>
   );

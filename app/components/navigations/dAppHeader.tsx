@@ -8,6 +8,7 @@ import {
   EarnIcon,
   EthLogo,
   InvestIcon,
+  StellarLogo,
 } from "../assets";
 import { GridLight, LightRay } from "../assets/bg";
 import Link from "next/link";
@@ -94,21 +95,15 @@ const DAppHeader = () => {
     const checkIsConnected = await isConnected();
     const previouslyAuthorized = await isAllowed();
     console.log({ checkIsConnected, previouslyAuthorized });
-    let publicKey = "";
-    let error = "";
 
     try {
-      if (checkIsConnected) {
-        publicKey = await requestAccess();
-        setConnectedWallet(publicKey);
+      if (checkIsConnected && previouslyAuthorized && !connectorWalletAddress) {
+        let publicKey = await requestAccess();
+        setConnectorWalletAddress(publicKey);
         console.log({ publicKey });
       }
     } catch (e) {
       console.log({ e });
-    }
-
-    if (error) {
-      return error;
     }
   };
 
@@ -199,6 +194,9 @@ const DAppHeader = () => {
     }
   }, [connectorWalletAddress,transactionsStatus]);
 
+  useEffect(() => {
+    retrievePublicKey()
+  })
   return (
     <div className="w-full relative">
       <div className="">
@@ -236,7 +234,7 @@ const DAppHeader = () => {
               />
               <p className="text-[#937ED6]">Invest</p>
             </li>
-            <li className="flex items-center gap-2">
+            {/* <li className="flex items-center gap-2">
               <Image
                 src={EarnIcon}
                 width={20}
@@ -244,9 +242,11 @@ const DAppHeader = () => {
                 alt="InvestIcon"
                 className=""
               />
-              <p className="text-paraDarkText">Earn</p>
-            </li>
-            <li className="flex items-center gap-2">
+              <p className="text-paraDarkText">Markets</p>
+            </li> */}
+                         <Link href={"/app/markets"}>
+            <li className="flex items-center gap-2 w-[200px]">
+ 
               <Image
                 src={AnalyticsIcon}
                 width={20}
@@ -254,26 +254,27 @@ const DAppHeader = () => {
                 alt="InvestIcon"
                 className=""
               />
-              <p className="text-paraDarkText">Analytics</p>
+              <p className="text-paraDarkText">Markets</p>
             </li>
+            </Link>
           </ul>
         </div>
         <div className="flex justify-between items-center md:gap-5 gap-3">
           <button
             className={` button1 inline-flex items-center md:px-[16px] px-[9px] md:py-[5px] py-[4px] gap-1`}
           >
-            <Image src={EthLogo} width={19} height={32} alt="bondhive" />
-            <p className="max-sm:hidden">Ethereum</p>
+            <Image src={StellarLogo} width={19} height={32} alt="bondhive" className="bg-white rounded-full"/>
+            <p className="max-sm:hidden">Stellar Testnet</p>
             <Image
               src={ChervonUp}
-              width={13}
-              height={13}
+              width={15}
+              height={15}
               alt="bondhive"
               className="max-sm:hidden"
             />
           </button>
           <button
-            className={`button2 flex items-center px-[16px] py-[5px] max-sm:text-[11px]  h-[40px]`}
+            className={`button2 flex items-center px-[16px] max-sm:px-2 py-[5px] max-sm:py-1 max-sm:text-[11px]  h-[40px]`}
             onClick={onClick}
             // onClick={retrievePublicKey}
           >
@@ -283,9 +284,9 @@ const DAppHeader = () => {
               </div>
             )}
             {connectorWalletAddress && isLoading === false && (
-              <p className="border-r-2 pr-2 mr-2 max-md:text-lg">
+              <p className="border-r-2 pr-2 mr-2 max-md:text-sm">
                 {userBalance <= 0 ? "0.00" : userBalance}{" "}
-                <span className="text-[12px]">USDT</span>
+                <span className="text-[12px]">USDC</span>
               </p>
             )}
             <p className="">

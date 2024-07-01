@@ -8,6 +8,7 @@ import TGLogo from "./tg.svg"
 import DiscordLogo from "./discord.svg"
 import LinkedInLogo from "./linkedIn.svg"
 import RedditLogo from "./reddit.svg"
+import StellarLogo from "./stellarlogo.svg"
 export {
     BondHiveLogo,
     TwitterLogo,
@@ -18,5 +19,6 @@ export {
     TGLogo,
     DiscordLogo,
     LinkedInLogo,
-    RedditLogo
+    RedditLogo,
+    StellarLogo
 }

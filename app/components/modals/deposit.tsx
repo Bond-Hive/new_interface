@@ -1,14 +1,16 @@
 "use client";
 import Image from "next/image";
 import styles from "./styles.module.scss";
-import { Close, DepositSuccess, EthLogo, Wallet } from "../assets";
+import { Close, DepositSuccess, EthLogo, UsdcBgLogo, Wallet } from "../assets";
 import React, { useEffect, useState } from "react";
 import UseStore from "@/store/UseStore";
 import {
   BASE_FEE,
+  accountToScVal,
   getEstimatedFee,
   getTxBuilder,
   mintTokens,
+  simulateTx,
   submitTx,
 } from "@/app/helpers/soroban";
 import { provider } from "../web3Function/soroban";
@@ -19,14 +21,12 @@ import { kit } from "../navigations/dAppHeader";
 import { ERRORS } from "@/app/helpers/error";
 import Loading from "../UI-assets/loading";
 import { pool } from "@/app/constants/poolOptions";
+import { Contract, TransactionBuilder } from "@stellar/stellar-sdk";
 const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
   const [depositAmount, setDepositAmount] = useState("");
   const [memo, setMemo] = useState("")
   const {
-    setConnectorWalletAddress,
     connectorWalletAddress,
-    poolReserve,
-    setPoolReserve,
     userBalance,
     selectedNetwork: currentNetwork,
     setTransactionsStatus,
@@ -41,7 +41,10 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
   const [selectedNetwork] = React.useState(TESTNET_DETAILS);
   const [connectionError, setConnectionError] = useState(null as string | null);
   const [openXDR, setOpenXDR] = useState(false)
-  console.log({ depositAmount });
+  const [signedXdr, setSignedXdr] = React.useState("");
+  const [txResultXDR,setTxResultXDR] = useState<String | null>(null)
+  const [notEnoughBal, setNotEnoughBal] = useState(false)
+  const [quote, setQuote] = useState<number | null | string >(null)
   // after depoist input proceed to the next
   const getFee = async () => {
     setIsGettingFee(true);
@@ -71,7 +74,7 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
       setIsGettingFee(false);
     }
   };
-  const [signedXdr, setSignedXdr] = React.useState("");
+
   const signWithFreighter = async () => {
     setIsSubmitting(true);
 
@@ -100,8 +103,7 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
       setConnectionError(ERRORS.UNABLE_TO_SIGN_TX);
     }
   };
-  console.log({ signedXdr });
-  const [txResultXDR,setTxResultXDR] = useState<String | null>(null)
+
   //Finally submit Deposit transaction
   const submit = async () => {
     setIsSubmitting(true);
@@ -123,13 +125,51 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
       setConnectionError(ERRORS.UNABLE_TO_SUBMIT_TX);
     }
   };
+
+  // GET QUOTE READ FUNCTION
+  const getQuoteCont = async (
+    id: string,
+    txBuilder: TransactionBuilder,
+    connection: any,
+    destinationPubKey: string | null = null
+  ) => {
+    console.log("id", id);
+    const contract = new Contract(id);
+    if (!destinationPubKey) {
+      console.log("destinationPubKey is null");
+      return false;
+    }
+    const tx = txBuilder
+      .addOperation(
+        contract.call("quote")
+      )
+      .setTimeout(30)
+      .build();
+
+    const result = await simulateTx<string>(tx, connection);
+    console.log("quoteresult", result);
+    console.log("result.toString()", result.toString());
+    return ethers.formatUnits(result, selectedPool.shareDecimals);
+  };
+  const getQuote = async () => {
+    const txBuilderBalance = await getTxBuilder(
+      connectorWalletAddress!,
+      BASE_FEE,
+      provider,
+      selectedNetwork.networkPassphrase
+    );
+
+    const quote: any = await getQuoteCont(selectedPool.contractAddress, txBuilderBalance, provider, connectorWalletAddress);
+    // setQuote(quote)
+    console.log({quote});
+    return quote
+  }
+
   useEffect(() => {
     if (signedXdr) {
       submit();
     }
   }, [signedXdr]);
-
-
 
   useEffect(() => {
     if (isGettingFee === false && connectionError !== "error getting fee") {
@@ -138,8 +178,6 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
     }
   }, [isGettingFee, connectionError]);
 
-  console.log({txResultXDR: txResultXDR?.includes('AA')})
-const [notEnoughBal, setNotEnoughBal] = useState(false)
   useEffect(() => {
     if(Number(depositAmount) > Number(userBalance)){
       setNotEnoughBal(true)
@@ -148,6 +186,9 @@ const [notEnoughBal, setNotEnoughBal] = useState(false)
       setNotEnoughBal(false)
     }
   }, [depositAmount, userBalance])
+  useEffect(() => {
+    getQuote()
+  })
   return (
     <>
       <div
@@ -183,15 +224,15 @@ const [notEnoughBal, setNotEnoughBal] = useState(false)
                 </div>
 
                 <div className=" flex justify-between items-center mb-2">
-                  <div className="token flex items-center gap-1 px-3">
+                <div className="token flex items-center gap-1 px-3 py-2">
                     <Image
-                      src={EthLogo}
+                      src={UsdcBgLogo}
                       width={24}
                       height={24}
                       alt="right"
                       className=""
                     />
-                    <h1 className="text-white text-[13px]">USDT</h1>
+                    <h1 className="text-white text-[13px]">USDC</h1>
                   </div>
                   <div className="">
                     <input
@@ -230,17 +271,36 @@ const [notEnoughBal, setNotEnoughBal] = useState(false)
                 </p>
               </div>
               }
-              <button
-                className={`mt-7 py-3 w-full flex ${notEnoughBal ? "button1 text-paraDarkText": "proceed"}`}
-                onClick={() => {
-                  !isGettingFee &&  getFee();
-                }}
-                disabled={notEnoughBal}
-              >
-                {isGettingFee ? <div className="mx-auto">
-                  <Loading/>
-                </div>  : <p className="mx-auto">Proceed</p> }
-              </button>
+              {
+                Number(quote) === 0 && (
+                  <button
+                  className={`mt-7 py-3 w-full flex ${notEnoughBal ? "button1 text-paraDarkText": "proceed"}`}
+                  onClick={() => {
+                    getQuote()
+                  }}
+                  disabled={notEnoughBal}
+                >
+                  {isGettingFee ? <div className="mx-auto">
+                    <Loading/>
+                  </div>  : <p className="mx-auto">Request Quote</p> }
+                </button>
+                )
+              }
+              {
+                Number(quote) > 0 && (
+                  <button
+                  className={`mt-7 py-3 w-full flex ${notEnoughBal ? "button1 text-paraDarkText": "proceed"}`}
+                  onClick={() => {
+                    !isGettingFee &&  getFee();
+                  }}
+                  disabled={notEnoughBal || Number(quote) <= 0}
+                >
+                  {isGettingFee ? <div className="mx-auto">
+                    <Loading/>
+                  </div>  : <p className="mx-auto">Proceed</p> }
+                </button>
+                )
+              }
             </div>
           )}
 

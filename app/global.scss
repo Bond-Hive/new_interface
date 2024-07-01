@@ -387,11 +387,7 @@ background: rgba(206, 206, 251, 0.07);
 //OUR PRODUCTS
 .products{
 
-.product_button{
-  border-radius: 25px;
-border: 1px solid rgba(186, 199, 255, 0.20);
-background: radial-gradient(100.62% 163.34% at 51.27% 0%, rgba(255, 255, 255, 0.00) 0%, rgba(186, 199, 255, 0.12) 100%);
-}
+
 .product_bg{
   border-radius: 13px;
 background: rgba(206, 206, 251, 0.02);
@@ -399,10 +395,23 @@ box-shadow: 0px -32px 64px 0px rgba(206, 206, 251, 0.05) inset;
 backdrop-filter: blur(8px);
 }
 }
-
+.product_button{
+  border-radius: 25px;
+border: 1px solid rgba(186, 199, 255, 0.20);
+background: radial-gradient(100.62% 163.34% at 51.27% 0%, rgba(255, 255, 255, 0.00) 0%, rgba(186, 199, 255, 0.12) 100%);
+}
 .circle{
   border-radius: 99px;
 border: 1px solid rgba(143, 103, 255, 0.12);
 background: rgba(206, 206, 251, 0.05);
 box-shadow: 0px -12px 24px 0px rgba(158, 113, 255, 0.20) inset;
+}
+
+.chart-container {
+  flex: 1;
+}
+
+.tv-lightweight-charts {
+  flex: 1;
+  height: 100%;
 }

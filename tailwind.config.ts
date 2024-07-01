@@ -22,10 +22,12 @@ const config: Config = {
      darkPrimText: "#9895B2",
      paraDarkText: "rgba(206, 206, 251, 0.25)",
      blueish: "#CECEFB",
+     priBlue: "#A586FE",
      dappHeaderBorder: "rgba(240, 242, 245, 0.11)",
      dappHeaderBg: "rgba(206, 206, 251, 0.04)",
      selectTabBg: "rgba(206, 206, 251, 0.02)",
-     gold: "#70FF87"
+     gold: "#70FF87",
+     blueBg: "rgba(165, 134, 254, 0.11)"
     }
   },
   plugins: [],

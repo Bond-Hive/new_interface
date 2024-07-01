@@ -252,6 +252,48 @@ export const mintTokens = async ({
     return "error";
   }
 };
+export const withdrawTokens = async ({
+  tokenId,
+  quantity,
+  destinationPubKey,
+  memo,
+  txBuilderAdmin,
+  server,
+}: {
+  tokenId: string;
+  quantity: string;
+  destinationPubKey: string;
+  memo: string;
+  txBuilderAdmin: TransactionBuilder;
+  server: SorobanRpc.Server;
+}) => {
+  const contract = new Contract(tokenId);
+
+  try {
+    const tx = txBuilderAdmin
+      .addOperation(
+        contract.call(
+          "withdraw",
+          ...[
+            accountToScVal(destinationPubKey), // from
+            stringToI128(quantity), // quantity
+          ],
+        ),
+      )
+      .setTimeout(TimeoutInfinite);
+
+    if (memo?.length > 0) {
+      tx.addMemo(Memo.text(memo));
+    }
+
+    const preparedTransaction = await server.prepareTransaction(tx.build());
+
+    return preparedTransaction.toXDR();
+  } catch (err) {
+    console.log("err");
+    return "error";
+  }
+};
 
 export const getEstimatedFee = async (
   tokenId: string,

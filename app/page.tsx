@@ -119,7 +119,7 @@ export default function Home() {
     setOpenDetail(newArr);
   };
   const apyRandom = [
-    12.56, 17.1, 29.8, 99.7, 30.8, 8.67, 73.8, 15.23, 22.45];
+    12.20, 13.08, 11.96, 12.83, 12.19, 13.07, 11.96, 12.82, 12.84];
   const getApy = () => {
     let randomFigure = Math.floor(Math.random() * apyRandom.length);
 
@@ -170,7 +170,7 @@ export default function Home() {
       setPools((prevPools) =>
         prevPools.map((pool) => ({ ...pool, apy: getApy() }))
       );
-    }, 4000);
+    }, 10000);
 
     // Clear interval on component unmount
     return () => clearInterval(interval);
@@ -179,7 +179,7 @@ export default function Home() {
     <>
       {/* <div className="w-full h-10 bg-red-600 md:max-lg:flex hidden max-sm:bg-blue-500 max-sm:flex"></div> */}
       <Header />
-      <main className="w-full md:pt-24 pt-16 z-[99]">
+      <main className="w-full md:pt-24 pt-16 z-[99]  max-w-[1500px] mx-auto">
         {/* DAPP */}
         <div className="pb-20" ref={heroRef}>
           {/* <motion.div

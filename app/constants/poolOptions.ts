@@ -21,11 +21,11 @@ export interface Pool {
 export const pool: Pool[] = [
     {
         name: "BTC (June-24)",
-        contractAddress: "CDFAPYA7SOZQFPAPOYGCCAEN3S7RFWHJ5HSLH2PHEY5ZN5G7LQECCABG",
+        contractAddress: "CCSVTGHCBGDNUANUQKAZGB4LWLTLYZQ6GU4MT3K7NKVRYJD7IJIUORBY",
         tokenAddress: "CB5IWDNEJO3GMXS2ZPDQYR7FEK6HBNIOBLNNUKWN66SRXYCWZIHTRRZ5",
         tokenDecimals: 18,
         tokenSymbol: "USDT",
-        shareId: "CD2ZTXAHYJ5CGCIWAVXT4P24CZL4PHN3FQMWFVP5HEHEBIRZCIZZ3DYR",
+        shareId: "CBW7PSEAIB57GCTY7RFBGZRZZZV3RG3TKULAGH5VDSBRZ4VRQDTLJTOS",
         shareDecimals: 7,
         shareSymbol: "VST",
         apy: "13.16%",
