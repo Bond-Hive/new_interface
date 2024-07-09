@@ -3,17 +3,19 @@ import Image from "next/image";
 import DAppHeader, { kit } from "../components/navigations/dAppHeader";
 import Header from "../components/navigations/header";
 import {
+  AnalyticsIcon,
   ApyArrowIcon,
   BTCBgLogo,
   Calendar,
   ChervonUp,
   EthBgWhiteLogo,
+  InvestIcon,
   SortIcon,
   UsdcBgLogo,
   chervonRight,
 } from "../components/assets";
 import { DappChart, MediumChartBg, MobileDappChart } from "../components/assets/bg";
-import { RectangleGroupIcon } from "@heroicons/react/24/outline";
+import { ChevronRightIcon, RectangleGroupIcon } from "@heroicons/react/24/outline";
 import DappFooter from "../components/navigations/dAppFooter";
 import DepositFunds from "../components/modals/deposit";
 import React, { memo, useEffect, useState } from "react";
@@ -27,35 +29,38 @@ import { stroopToXlm, xlmToStroop } from "../helpers/format";
 import { ERRORS } from "../helpers/error";
 import { pool } from "../constants/poolOptions";
 import WithdrawFunds from "../components/modals/withdraw";
-
+import Link from "next/link";
+import { formatFigures } from "../components/web3FiguresHelpers";
+import { GetAPY } from "../dataService/dataServices";
+import Loading from "../components/UI-assets/loading";
 const MainDapp = () => {
-  const {setConnectorWalletAddress, connectorWalletAddress, poolReserve, setPoolReserve,transactionsStatus,setSelectedPool, selectedPool} = UseStore()
+  const {setConnectorWalletAddress, connectorWalletAddress, poolReserve, setPoolReserve,transactionsStatus,setSelectedPool, selectedPool, } = UseStore()
   const [openState, setOpenState] = useState(false)
   const [openWithdrawState, setOpenWithdrawState] = useState(false)
-  const [shareBalance, setShareBalance] = useState("0")
+  const [shareBalance, setShareBalance] = useState<any>(null)
   const [selectedNetwork] = React.useState(TESTNET_DETAILS);
+  // const [pools, setPools] = useState<any>(pool ? pool : [])
+  const [pools, setPools] = useState(pool);
+  const [sortOrder, setSortOrder] = useState('asc'); 
+
   const getReserveContractCal = async (
     id: string,
     txBuilder: TransactionBuilder,
     connection: any,
     destinationPubKey: string | null = null,
   ) => {
-    console.log("id", id);
     const contract = new Contract(id);
     if ( !destinationPubKey ) {
-      console.log("destinationPubKey is null");
       return false;
     }
     const tx = txBuilder
       .addOperation(
-        contract.call("reserves"),
+        contract.call("total_deposit"),
       )
       .setTimeout(30)
       .build();
 
     const result = await simulateTx<string>(tx, connection);
-    console.log("result", result);
-    console.log("result.toString()", result.toString());
     return ethers.formatUnits(result, pool[0].tokenDecimals);
   }; 
 
@@ -70,9 +75,9 @@ const MainDapp = () => {
 
     const poolReserve: any = await getReserveContractCal(pool[poolIndex].contractAddress, txBuilderBalance, provider, connectorWalletAddress);
     setPoolReserve({[poolIndex]: parseFloat(poolReserve).toFixed(2).toString()})
-    console.log("poolReserve", poolReserve);
     return poolReserve
   }
+  // console.log({allPools: allPools[0]})
 
   // Share Balance
   const getShareCont = async (
@@ -81,10 +86,8 @@ const MainDapp = () => {
     connection: any,
     destinationPubKey: string | null = null
   ) => {
-    console.log("id", id);
     const contract = new Contract(id);
     if (!destinationPubKey) {
-      console.log("destinationPubKey is null");
       return false;
     }
     const tx = txBuilder
@@ -100,8 +103,6 @@ const MainDapp = () => {
       .build();
 
     const result = await simulateTx<string>(tx, connection);
-    console.log("result", result);
-    console.log("result.toString()", result.toString());
     return ethers.formatUnits(result, 7);
   };
   const getShareBalance = async (poolIndex: number) => {
@@ -113,33 +114,82 @@ const MainDapp = () => {
     );
 
     const shareBalance: any = await getShareCont(pool[poolIndex].shareId, txBuilderBalance, provider, connectorWalletAddress);
-    setShareBalance(shareBalance)
-    console.log({shareBalance});
+    setShareBalance({[poolIndex]:shareBalance})
     return shareBalance
   }
 
+  useEffect(() => {
+    const interval = setInterval( async () => {
+      const {data} = await GetAPY("https://bondexecution.onrender.com/monitoring/getYields")
+      setPools((prevPools) =>
+        prevPools.map((pool, index) => ({ ...pool, apy: data.data[index].averageYieldPostExecution?.upper }))
+      );
+    }, 10000);
+
+    // Clear interval on component unmount
+    return () => clearInterval(interval);
+  }, [])
 
   useEffect(() => {
-    console.log({connectorWalletAddress})
-    if(connectorWalletAddress){
-      pool.forEach((pool, index) =>{
-        getPoolReserve(index)
-        getShareBalance(index)
-      } )
+
+    const updatedPool = async () => {
+      if(connectorWalletAddress && pool){
+        const updatedPools = await Promise.all(pools.map(async (pool: any, index: number) => {
+          const reserves = await getPoolReserve(index)
+          const shareBalance = await getShareBalance(index)
+
+          return {
+            ...pool,
+            reserves,
+            shareBalance,
+            position: Number(shareBalance) * 100
+          }
+        }))
+        setPools(updatedPools)
+      }
     }
+    updatedPool()
   }, [connectorWalletAddress, transactionsStatus])
 
-
+  const sortFunc = (type: string) => {
+    if(type === "apy"){
+      setPools(prevPools => {
+        const sortedPools = [...prevPools].sort((a, b) => {
+          if (sortOrder === 'asc') {
+            return parseFloat(a.apy) - parseFloat(b.apy);
+          } else {
+            return parseFloat(b.apy) - parseFloat(a.apy);
+          }
+        });
+        console.log({sortedPools})
+        return sortedPools;
+      });
+      setSortOrder(prevOrder => (prevOrder === 'asc' ? 'desc' : 'asc'));
+    } else{
+      setPools(prevPools => {
+        const sortedPools = [...prevPools].sort((a, b) => {
+          if (sortOrder === 'asc') {
+            return parseFloat(a.reserves) - parseFloat(b.reserves);
+          } else {
+            return parseFloat(b.reserves) - parseFloat(a.reserves);
+          }
+        });
+        console.log({sortedPools})
+        return sortedPools;
+      });
+      setSortOrder(prevOrder => (prevOrder === 'asc' ? 'desc' : 'asc'));
+    }
+  };
   return (
     <>
     <div className="dapp">
       <DAppHeader />
 
-      <div className="md:w-9/12 md:max-lg:w-11/12 mx-auto md:pt-24 pt-8 px-5 h-[80vh]">
+      <div className="md:w-9/12 md:max-lg:w-11/12 mx-auto md:pt-24 pt-8 px-5">
         {/* three cards */}
-        <div className="max-sm:max-w-10/12 max-sm:overflow-x-scroll max-w-[1500px] mx-auto">
-          <div className=" max-sm:gri flex grid-cols-3 md:gap-6 gap-3 max-sm:w-[850px] ">
-            <div className="eth_avg max-sm:w-[170px] max-sm:h-[184px] w-3/12 h-[136px] card relative overflow-hidden">
+        <div className="max-sm:max-w-10/12 max-sm:overflow-x-scroll max-w-[1100px] mx-auto">
+          <div className=" max-sm:gri flex grid-cols-3 md:gap-6 gap-3 max-sm:w-[850px ">
+            <div className="eth_avg max-sm:w-6/12 max-sm:h-[184px] w-6/12 h-[136px] card relative overflow-hidden">
               <div className="flex justify-between items-center md:p-4 p-2">
                 <div className="">
                   <div className="flex items-center gap-2">
@@ -170,13 +220,18 @@ const MainDapp = () => {
                 </div>
               </div>
               <div className="mt-7">
-              <Image
-                  src={DappChart}
-                  width={274}
-                  height={104}
-                  alt="right"
-                  className="absolute bottom-0 max-sm:hidden"
-                />
+                <div className="absolute bottom-0  max-sm:hidden">
+                <div className="w-[534px] h-[134px] relative">
+                        <Image
+                          src={DappChart}
+                          layout="fill"
+                          alt=""
+                          className="object-center"
+                          objectFit="cover"
+                          objectPosition="center"
+                        />
+                      </div>
+                </div>
                 <Image
                   src={MobileDappChart}
                   width={274}
@@ -186,7 +241,7 @@ const MainDapp = () => {
                 />
               </div>
             </div>
-            <div className="btc_avg max-sm:w-[170px] max-sm:h-[184px] w-3/12 h-[136px] card relative overflow-hidden">
+            <div className="btc_avg max-sm:w-6/12 max-sm:h-[184px] w-6/12 h-[136px] card relative overflow-hidden">
               <div className="flex justify-between items-center md:p-4 px-2 max-sm:py-2">
                 <div className="">
                   <div className="flex items-center gap-2">
@@ -210,20 +265,25 @@ const MainDapp = () => {
                           objectPosition="center"
                         />
                       </div>
-                      <p className="text-[8px] text-[#A586FE]">Mar-24</p>
+                      <p className="text-[8px] text-[#A586FE]">March-24</p>
                     </div>
                   </div>
                   <h1 className="text-[20px] text-white mt-2 brFirma_font">20.61%</h1>
                 </div> 
               </div>
               <div className="mt-7">
-                <Image
-                  src={DappChart}
-                  width={274}
-                  height={104}
-                  alt="right"
-                  className="absolute bottom-0 max-sm:hidden"
-                />
+                <div className="absolute bottom-0  max-sm:hidden">
+                <div className="w-[534px] h-[134px] relative">
+                        <Image
+                          src={DappChart}
+                          layout="fill"
+                          alt=""
+                          className="object-center"
+                          objectFit="cover"
+                          objectPosition="center"
+                        />
+                      </div>
+                </div>
                 <Image
                   src={MobileDappChart}
                   width={274}
@@ -233,7 +293,7 @@ const MainDapp = () => {
                 />
               </div>
             </div>
-            <div className="liquid_staking max-sm:h-[184px] w-[538px] w-6/12 card relative overflow-hidden">
+            {/* <div className="liquid_staking max-sm:h-[184px] w-[538px] w-6/12 card relative overflow-hidden">
               <div className="flex justify-between items-center p-4">
                 <div className="">
                   <div className="flex items-center">
@@ -258,11 +318,11 @@ const MainDapp = () => {
                   />
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
         {/* Investment pools */}
-        <div className="my-16 max-w-[1500px] mx-auto">
+        <div className="my-16 max-w-[1100px] mx-auto">
           <div className="title_arrange flex justify-between items-center">
             <div className="flex gap-2 items-center">
               <h1 className="text-white">Investment pools</h1>
@@ -281,38 +341,27 @@ const MainDapp = () => {
           </div>
           <div className="table w-full mt-5">
             <div className="table_heading text-blueish p-4 flex justify-between items-center mb-5">
-              <div className="flex items-center gap-2 w-5/12  max-sm:w-7/12">
+              <div className="flex items-center gap-2 w-4/12  max-sm:w-7/12">
                 <h2 className="text-[15px]">Strategy</h2>
-                <Image
-                  src={SortIcon}
-                  width={14}
-                  height={14}
-                  alt="right"
-                  className=""
-                />
               </div>
               <div className="flex items-center gap-2 w-3/12  max-sm:w-5/12">
                 <h2 className="text-[15px]">APY</h2>
+                <div className="cursor-pointer" onClick={() => sortFunc("apy")}>
                 <Image
                   src={SortIcon}
                   width={14}
                   height={14}
                   alt="right"
-                  className=""
+                  className="apy_sort"
                 />
+                </div>
               </div>
-              <div className="flex items-center gap-2 w-3/12 max-md:hidden">
+              <div className="flex items-center gap-2 w-3/12 max-lg:hidden">
                 <h2 className="text-[15px]">Deposit Asset</h2>
-                <Image
-                  src={SortIcon}
-                  width={14}
-                  height={14}
-                  alt="right"
-                  className=""
-                />
               </div>
-              <div className="flex items-center gap-2 w-3/12 max-md:hidden">
+              <div className="flex items-center gap-2 w-3/12 max-lg:hidden">
                 <h2 className="text-[15px]">Reserves</h2>
+                <div className="cursor-pointer" onClick={() => sortFunc("reserves")}>
                 <Image
                   src={SortIcon}
                   width={14}
@@ -321,26 +370,23 @@ const MainDapp = () => {
                   className=""
                 />
               </div>
-              <div className="flex items-center gap-2 w-3/12 max-md:hidden">
+              </div>
+              <div className="flex items-center gap-2 w-3/12 max-lg:hidden">
                 <h2 className="text-[15px]">Maturity</h2>
-                <Image
-                  src={SortIcon}
-                  width={14}
-                  height={14}
-                  alt="right"
-                  className=""
-                />
+              </div>
+              <div className="flex items-center gap-2 w-3/12 max-lg:hidden">
+                <h2 className="text-[15px]">Actions</h2>
               </div>
             </div>
-            <div className="table_pool_container max-md:hidden">
-              {pool.map((pool, index) => (
+            <div className="table_pool_container max-lg:hidden">
+              {pools.map((pool: any, index: number) => (
                 <div
-                  className={`table_pool flex px-4 border-border_pri pb-3 pt-6 ${
+                  className={`table_pool flex items-start px-4 border-border_pri pb-3 pt-6 ${
                     index !== 0 && "border-t"
                   }`}
                   key={`${index}--pool`}
                 >
-                  <div className="strategy_Names w-5/12 bg-red-60">
+                  <div className="strategy_Names w-4/12 bg-red-60">
                     <div className="flex items-center mb-3 gap-2">
                       <Image
                         src={pool.img}
@@ -350,18 +396,68 @@ const MainDapp = () => {
                         className=""
                       />
                       <div className="">
-                        <h1 className="text-white text-[18px]">
+                        <h1 className="text-white text-[16px]">
                           {pool.name}
                         </h1>
-                        <p className="text-darkPrimText text-sm capitalize">
+                        {/* <p className="text-darkPrimText text-sm capitalize">
                           {pool.name} Futures and Spot
-                        </p>
-                        <p className="text-darkPrimText text-sm mt-2">Minimum <span className="text-blueish">$100</span></p>
+                        </p> */}
+                        <p className="text-darkPrimText text-sm mt-2">Minimum <span className="text-blueish">${pool.minimum}</span></p>
                       </div>
                     </div>
-                    <div className="flex gap-2 items-center">
+
+                  </div>
+                  <div className="APY text-blueish  w-3/12">
+                    <h1 className="text-[16px] mb-1 ">{pool.apy}</h1>
+                    <div className="time_tag flex items-center gap-1 py-[3px] px-[5px] w-[150px]">
+                      {" "}
+                      <Image
+                        src={ApyArrowIcon}
+                        width={14}
+                        height={14}
+                        alt="right"
+                        className=""
+                      />{" "}
+                      <p className="text-[13px] text-[#A586FE]">
+                        2.1% vs. last month
+                      </p>
+                    </div>
+                  </div>
+                  <div className="Deposit_asset text-blueish w-3/12 flex items-center">
+                    <div className="asset_logo ">
+                      <Image
+                        src={UsdcBgLogo}
+                        width={25}
+                        height={25}
+                        alt="token-img"
+                        className=""
+                      />
+                    </div>
+                    <h1 className="text-[15px] ">{pool.tokenSymbol}</h1>
+                  </div>
+                  <div className="minimum text-blueish w-3/12">
+                    <h1 className="text-[16px] mb-2 ">${formatFigures(pool.reserves,2)}</h1>
+                  </div>
+                  <div className="maturity text-blueish w-3/12">
+                    <h1 className="text-[16px] mb-2 ">{pool.expiration}</h1>
+                  </div>
+                  <div className="flex flex-col gap-4 items-cente w-3/12">
+                  <button
+                      className={"button1 px-9 py-[7px] gap-1 hover:bg-transparent cursor-pointer"}
+                      onClick={() => {
+                        setOpenWithdrawState(true)
+                        setSelectedPool(pool)
+                      }}
+                      disabled={!connectorWalletAddress || Number(selectedPool.shareBalance) <= 0}
+                    >
+                      {
+                        !shareBalance && connectorWalletAddress ? <div className="flex justify-center">
+                          <Loading/>
+                        </div>  :                      <p className="text-sm text-center"> My position</p>
+                      }
+                    </button>
                     <button
-                      className={` button1 inline-flex items-center px-9 py-[4px] gap-1 ${!connectorWalletAddress && "hover:bg-transparent"}`}
+                      className={` button2 inline-flex items-center px-[60px] py-[7px] gap-1 mx-auto ${!connectorWalletAddress && "hover:bg-transparent button1"}`}
                       onClick={() => {
                         setOpenState(true)
                         setSelectedPool(pool)
@@ -377,64 +473,12 @@ const MainDapp = () => {
                         alt="chervonRight"
                       />
                     </button>
-                    <button
-                      className={` button1 inline-flex items-center px-9 py-[4px] gap-1 ${Number(shareBalance) <= 0 || !connectorWalletAddress && "hover:bg-transparent"}`}
-                      onClick={() => {
-                        setOpenWithdrawState(true)
-                        setSelectedPool(pool)
-                      }}
-                      disabled={!connectorWalletAddress || Number(shareBalance) <= 0}
-                    >
-                      <p className="text-sm">My position</p>
-                    </button>
                     </div>
-                  </div>
-                  <div className="APY text-blueish  w-3/12">
-                    <h1 className="text-lg mb-1 ">{pool.apy}%</h1>
-                    <div className="time_tag flex items-center gap-1 py-[3px] px-[5px] w-[150px]">
-                      {" "}
-                      <Image
-                        src={ApyArrowIcon}
-                        width={14}
-                        height={14}
-                        alt="right"
-                        className=""
-                      />{" "}
-                      <p className="text-[13px] text-[#A586FE]">
-                        2.1% vs. last month
-                      </p>
-                    </div>
-                  </div>
-                  <div className="Deposit_asset text-blueish w-3/12">
-                    <div className="asset_logo flex items-center mb-2">
-                      <Image
-                        src={pool.ticker == "BTC" ? BTCBgLogo: EthBgWhiteLogo}
-                        width={25}
-                        height={25}
-                        alt="token-img"
-                        className=""
-                      />
-                      <Image
-                        src={UsdcBgLogo}
-                        width={25}
-                        height={25}
-                        alt="token-img"
-                        className="-ml-2 relative z-9"
-                      />
-                    </div>
-                    <h1 className="text-[15px] mb-1 ">{pool.ticker}/{pool.tokenSymbol}</h1>
-                  </div>
-                  <div className="minimum text-blueish w-3/12">
-                    <h1 className="text-[18px] mb-2 ">${poolReserve[index] ? poolReserve[index] : "0.00"}</h1>
-                  </div>
-                  <div className="maturity text-blueish w-3/12">
-                    <h1 className="text-[18px] mb-2 ">{pool.expiration}</h1>
-                  </div>
                 </div>
               ))}
             </div>
             {/*Mobile Pool Strategies */}
-            <div className="table_pool_container_mobile flex-col gap-4 hidden max-md:flex">
+            <div className="table_pool_container_mobile flex-col gap-4 hidden max-lg:flex">
               {pool.map((pool, index) => (
                 <div
                   className="table_pool_container p-5 text-secText"
@@ -450,17 +494,17 @@ const MainDapp = () => {
                         className=""
                       />
                       <div className="">
-                        <h1 className="text-white text-[18px]">
+                        <h1 className="text-white text-[16px]">
                           {" "}
                           {pool.name}
                         </h1>
-                        <p className="text-darkPrimText text-[10px] capitalize">
+                        {/* <p className="text-darkPrimText text-[10px] capitalize">
                           {pool.name} Futures and Spot
-                        </p>
+                        </p> */}
                       </div>
                     </div>
                     <div className="APY text-blueish  ">
-                      <h1 className="text-[16px] mb-1 ">{pool.apy}%</h1>
+                      <h1 className="text-[16px] mb-1 ">{pool.apy}</h1>
                       <div className="time_tag flex items-center gap-1 py-[3px] px-[5px] w-[150px]">
                         {" "}
                         <Image
@@ -487,25 +531,18 @@ const MainDapp = () => {
                     </div>
                     <div className="deposit_assets flex justify-between items-center my-4">
                       <p className="">Deposit assets</p>
-                      <div className="Deposit_asset text-blueish  flex">
-                        <div className="asset_logo flex items-center -ml-4">
-                          <Image
-                            src={pool.ticker == "BTC" ? BTCBgLogo: EthBgWhiteLogo}
-                            width={25}
-                            height={25}
-                            alt="token-img"
-                            className=""
-                          />
+                      <div className="Deposit_asset text-blueish  flex flex items-center gap-1">
+                        <div className="asset_logo ">
                           <Image
                             src={UsdcBgLogo}
                             width={25}
                             height={25}
                             alt="token-img"
-                            className="-ml-2 relative z-9"
+                            className="relative z-9"
                           />
                         </div>
-                        <h1 className="text-[16px] mb-1 ml-2">
-                        {pool.ticker}/{pool.tokenSymbol}
+                        <h1 className="text-[16px]">
+                        {pool.tokenSymbol}
                         </h1>
                       </div>
                     </div>
@@ -514,13 +551,32 @@ const MainDapp = () => {
                       <p className=" text-blueish">
                         $100
                         {/* <span className="text-[13px] text-paraDarkText ml-2">
-                          -{pool.minimum} USDT
+                          -{pool.minimum} USDC
                         </span> */}
                       </p>
                     </div>
                   </div>
                   <button
-                    className={`w-full button1 flex items-center justify-center px-9 py-3 gap-1`}
+                    className={`w-full button1 flex items-center justify-center px-9 py-3 gap-1 hover:bg-transparent `}
+                    onClick={() => {
+                      setOpenWithdrawState(true)
+                      setSelectedPool(pool)
+                    }}
+                    disabled={!connectorWalletAddress || Number(selectedPool.shareBalance) <= 0}
+                  >
+                                          {
+                        !shareBalance && connectorWalletAddress ? <div className="flex justify-center">
+                          <Loading/>
+                        </div>  :  <div className="flex items-center gap-1">
+                        <p className="text-sm text-center"> My position</p>
+                        <ChevronRightIcon className="w-[13px] h-[20px] "/>
+                          </div>
+                      }
+                    {/* <p className="text-sm">My Position</p> */}
+
+                  </button>
+                  <button
+                    className={`w-full button2 mt-3 flex items-center justify-center px-9 py-3 gap-1`}
                     onClick={() => {
                       setOpenState(true)
                       setSelectedPool(pool)
@@ -528,28 +584,7 @@ const MainDapp = () => {
                     disabled={!connectorWalletAddress}
                   >
                     <p className="text-sm">Invest Now</p>
-                    <Image
-                      src={chervonRight}
-                      width={13}
-                      height={13}
-                      alt="chervonRight"
-                    />
-                  </button>
-                  <button
-                    className={`w-full button1 flex items-center justify-center px-9 py-3 gap-1 mt-3 ${Number(shareBalance) <= 0 && "hover:bg-transparent"}`}
-                    onClick={() => {
-                      setOpenWithdrawState(true)
-                      setSelectedPool(pool)
-                    }}
-                    disabled={Number(shareBalance) <= 0}
-                  >
-                    <p className="text-sm">My Position</p>
-                    <Image
-                      src={chervonRight}
-                      width={13}
-                      height={13}
-                      alt="chervonRight"
-                    />
+                    <ChevronRightIcon className="w-[13px] h-[13px] h-[20px] pt-1"/>
                   </button>
                 </div>
               ))}
@@ -557,6 +592,34 @@ const MainDapp = () => {
           </div>
         </div>
       </div>
+      <div className="bg-[#170a28] border-t border-dappHeaderBorder fixed z-[999] w-full bottom-0 py-6 hidden max-lg:block">
+          <ul className="flex justify-center gap-10 pl-3">
+          <Link href={"/app"}>
+            <li className="flex items-center gap-2">
+              <Image
+                src={InvestIcon}
+                width={20}
+                height={20}
+                alt="InvestIcon"
+                className=""
+              />
+              <p className="text-[#937ED6]">Invest</p>
+            </li>
+            </Link>
+            <Link href={"/app/markets"}>
+              <li className="flex items-center gap-2">
+                <Image
+                  src={AnalyticsIcon}
+                  width={20}
+                  height={20}
+                  alt="InvestIcon"
+                  className=""
+                />
+                <p className="text-paraDarkText">Markets</p>
+              </li>
+            </Link>
+          </ul>
+        </div>
       <DappFooter />
     </div>
 
@@ -564,7 +627,7 @@ const MainDapp = () => {
       openState &&     <DepositFunds setOpenState={setOpenState}/>
     }
     {
-      openWithdrawState && <WithdrawFunds setOpenState={setOpenWithdrawState} shareBalance={shareBalance}/>
+      openWithdrawState && <WithdrawFunds setOpenState={setOpenWithdrawState}/>
     }
     </>
   );

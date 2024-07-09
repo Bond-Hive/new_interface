@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { dayData, weekData } from "./priceData";
 
 import { createChart, CrosshairMode } from 'lightweight-charts';
-import { volumeData } from "./volumeData";
-export default function Charts({testData}: {testData: any}) {
+export default function Charts({testData, type}: {testData: any, type: string}) {
     const chartContainerRef: any = useRef();
   const chart: any = useRef();
   const resizeObserver: any = useRef();
@@ -31,23 +29,18 @@ export default function Charts({testData}: {testData: any}) {
       },
     });
 
-    console.log(chart.current);
 
     const candleSeries = chart.current.addLineSeries({
     color: "blue",
-    lineWidth: 2
+    lineWidth: 2,
+    priceFormat: {
+      type: 'custom',
+      formatter: (price: number) => type === "price" ? `$${price.toFixed(2)}` : `${price.toFixed(2)}%` ,
+    },
+
     });
 
     candleSeries.setData(interval == "1m" && testData);
-
-    // const areaSeries = chart.current.addAreaSeries({
-    //   topColor: 'rgba(38,198,218, 0.56)',
-    //   bottomColor: 'rgba(38,198,218, 0.04)',
-    //   lineColor: 'rgba(38,198,218, 1)',
-    //   lineWidth: 2
-    // });
-
-    // areaSeries.setData(areaData);
 
     // const volumeSeries = chart.current.addHistogramSeries({
     //   color: '#182233',

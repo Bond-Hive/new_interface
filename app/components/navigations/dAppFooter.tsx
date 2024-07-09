@@ -17,7 +17,7 @@ const DappFooter = () => {
       <div className=" mx-auto flex items-center justify-between max-md:flex-col-reverse max-md:gap-10">
         <div className="flex items-center max-md:flex-col gap-5">
           <div className="socials flex  gap-4">
-            <Link href={"https://t.me/+q51iBH0AuB43MmU1"} target="_blank">
+            <Link href={"https://t.me/+AjBlPFAjjLYyNWNl"} target="_blank">
               <div className="each-socials w-[40px] h-[40px]">
                 <Image src={TGLogo} width={16} height={24} alt="bondhive" />
               </div>
@@ -32,7 +32,7 @@ const DappFooter = () => {
                 />
               </div>
             </Link>
-            <Link href={"https://x.com/BondHive"} target="_blank">
+            {/* <Link href={"https://x.com/BondHive"} target="_blank">
               <div className="each-socials w-[40px] h-[40px]">
                 <Image src={RedditLogo} width={20} height={20} alt="bondhive" />
               </div>
@@ -56,7 +56,7 @@ const DappFooter = () => {
                   alt="bondhive"
                 />
               </div>
-            </Link>
+            </Link> */}
           </div>
           <p className="xl:w-[334px] text-sm">
             @ 2024 Bondhive; All Rights Reserved

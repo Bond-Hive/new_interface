@@ -16,6 +16,7 @@ import {
 } from "@stellar/stellar-sdk";
 import { userSignTransaction } from './freighter';
 import { getPublicKey } from '@stellar/freighter-api';
+import { getTxBuilder } from "@/app/helpers/soroban";
 
 const rpcUrl = "https://soroban-testnet.stellar.org";
 const contractAddress = 'CDFAPYA7SOZQFPAPOYGCCAEN3S7RFWHJ5HSLH2PHEY5ZN5G7LQECCABG';
@@ -79,15 +80,41 @@ export const simulateTx = async <ArgType>(
 async function fetchBalance(addr: any) {
     const caller = await getPublicKey();
     const result = await contractInt(caller, 'balance', [accountToScVal(caller)]);
-    console.log({ result });
 }
 
-// Example usage
-// const destinationPubKey = "G..."; // Replace with actual destination public key
-// const quantity = "1000";
-// const values = [
-//     accountToScVal(destinationPubKey),
-//     stringToI128(quantity),
-// ];
+// const getQuoteCont = async (
+//     id: string,
+//     txBuilder: TransactionBuilder,
+//     connection: any,
+//     destinationPubKey: string | null = null,
+//     functName: string
+//   ) => {
+//     const contract = new Contract(id);
+//     if (!destinationPubKey) {
+//       return false;
+//     }
+//     const tx = txBuilder
+//       .addOperation(
+//         contract.call(functName)
+//       )
+//       .setTimeout(30)
+//       .build();
+
+//     const result = await simulateTx<string>(tx, connection);
+//     return result;
+//   };
+//   const readContract = async (functName: string) => {
+//     const caller = await getPublicKey()
+//     const txBuilderBalance = await getTxBuilder(
+//       caller!,
+//       BASE_FEE,
+//       provider,
+//       Networks.TESTNET
+//     );
+
+//     const result: any = await getQuoteCont(selectedPool.contractAddress, txBuilderBalance, provider, connectorWalletAddress, functName);
+//     console.log({[functName]: result});
+//     return result
+//   }
 
 export { fetchBalance, contractInt,provider };

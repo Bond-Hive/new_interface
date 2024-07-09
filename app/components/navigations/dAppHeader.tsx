@@ -36,7 +36,7 @@ import {
   ISupportedWallet,
   StellarWalletsKit,
   WalletNetwork,
-  XBULL_ID,
+  FREIGHTER_ID,
   allowAllModules,
   xBullModule,
 } from "@creit.tech/stellar-wallets-kit";
@@ -54,10 +54,11 @@ import { provider } from "../web3Function/soroban";
 import { TESTNET_DETAILS } from "@/app/helpers/network";
 import Loading from "../UI-assets/loading";
 import { pool } from "@/app/constants/poolOptions";
+import { formatFigures } from "../web3FiguresHelpers";
 
 export const kit: StellarWalletsKit = new StellarWalletsKit({
   network: WalletNetwork.TESTNET,
-  selectedWalletId: XBULL_ID,
+  selectedWalletId: FREIGHTER_ID,
   modules: allowAllModules(),
 });
 
@@ -82,7 +83,6 @@ const DAppHeader = () => {
   const connectWallet = async () => {
     const isAllowed = await setAllowed();
     if (isAllowed) {
-      console.log({ isAllowed });
       alert("Successfully added the app to Freighter's Allow List");
     }
     return isConnected;
@@ -94,13 +94,11 @@ const DAppHeader = () => {
     }
     const checkIsConnected = await isConnected();
     const previouslyAuthorized = await isAllowed();
-    console.log({ checkIsConnected, previouslyAuthorized });
 
     try {
       if (checkIsConnected && previouslyAuthorized && !connectorWalletAddress) {
         let publicKey = await requestAccess();
         setConnectorWalletAddress(publicKey);
-        console.log({ publicKey });
       }
     } catch (e) {
       console.log({ e });
@@ -137,10 +135,8 @@ const DAppHeader = () => {
     connection: any,
     destinationPubKey: string | null = null
   ) => {
-    console.log("id", id);
     const contract = new Contract(id);
     if (!destinationPubKey) {
-      console.log("destinationPubKey is null");
       return false;
     }
     const tx = txBuilder
@@ -156,9 +152,7 @@ const DAppHeader = () => {
       .build();
 
     const result = await simulateTx<string>(tx, connection);
-    console.log("result", result);
-    console.log("result.toString()", result.toString());
-    return ethers.formatUnits(result, 18);
+    return ethers.formatUnits(result, pool[0].tokenDecimals);
   };
 
   const [isLoading, setIsLoading] = useState<Boolean | null>(null);
@@ -177,7 +171,6 @@ const DAppHeader = () => {
         connectorWalletAddress
       );
       setUserBalance(parseFloat(tokenBalanceUser).toFixed(2).toString());
-      console.log("tokenBalanceUser", tokenBalanceUser);
       setIsLoading(false);
       return tokenBalanceUser;
     } catch (error) {
@@ -187,7 +180,6 @@ const DAppHeader = () => {
   };
 
   useEffect(() => {
-    console.log({ connectorWalletAddress });
     if (connectorWalletAddress) {
       setSelectedNetwork(selectedNetwork.networkPassphrase);
       getUserBalance();
@@ -212,18 +204,21 @@ const DAppHeader = () => {
           width={1152}
           height={800}
           alt="bondhive"
-          className="absolute -top-52 right-[170px] flex justify-center"
+          className="absolute -top-52 right-[170px] flex justify-center -z-10"
         />
       </div>
       <div
-        className={`${style.dapp_header} flex justify-between items-center md:px-12 px-4 max-sm:pt-7 md:h-[64px] md:border-b border-dappHeaderBorder md:bg-dappHeaderBg`}
+        className={`${style.dapp_header} z-99  flex justify-between items-center md:px-12 px-4 max-sm:pt-7 md:h-[64px] md:border-b border-dappHeaderBorder md:bg-dappHeaderBg`}
       >
         <div className="flex items-center divide-x divide-paraDarkText gap-4">
+          <Link href={"/"}>
           <div className="logo flex items-center ">
             <Image src={BondHiveLogo} width={40} height={40} alt="bondhive" />
             <p className="text-lg font-semibold text-white">Bondhive</p>
           </div>
-          <ul className="flex justify-between gap-7 pl-3 hidden">
+          </Link>
+          <ul className="flex justify-between gap-7 pl-3 max-lg:hidden">
+          <Link href={"/app"}>
             <li className="flex items-center gap-2">
               <Image
                 src={InvestIcon}
@@ -234,6 +229,7 @@ const DAppHeader = () => {
               />
               <p className="text-[#937ED6]">Invest</p>
             </li>
+            </Link>
             {/* <li className="flex items-center gap-2">
               <Image
                 src={EarnIcon}
@@ -285,7 +281,7 @@ const DAppHeader = () => {
             )}
             {connectorWalletAddress && isLoading === false && (
               <p className="border-r-2 pr-2 mr-2 max-md:text-sm">
-                {userBalance <= 0 ? "0.00" : userBalance}{" "}
+                {userBalance <= 0 ? "0.00" : formatFigures(userBalance, 2)}{" "}
                 <span className="text-[12px]">USDC</span>
               </p>
             )}

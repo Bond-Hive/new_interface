@@ -25,6 +25,10 @@ import { EcpliseGlow, MediumChartBg } from "./components/assets/bg";
 import Header from "./components/navigations/header";
 import Link from "next/link";
 import OurProducts from "./components/UI-assets/ourProducts";
+import { ChevronRightIcon } from "@heroicons/react/24/outline";
+import {GetAPY} from "./dataService/dataServices";
+import { pool } from "./constants/poolOptions";
+import UseStore from "@/store/UseStore";
  const getAnimationVariants = (delay: Number) => {
   const variants: any = {
     in: {
@@ -40,7 +44,7 @@ import OurProducts from "./components/UI-assets/ourProducts";
   return variants;
 };
 export default function Home() {
-
+  const {setAllPools} = UseStore()
   const cardHoverVariants = {
     in: {
       y: 0,
@@ -73,108 +77,65 @@ export default function Home() {
   const faqInView = useInView(faqRef);
   const becomeInView = useInView(becomeRef);
 
-  const faq = [
-    {
-      id: 1,
-      title:
-        "How is the yield locked, and can it change with market conditions?",
-      content:
-        "The yield is locked by simultaneously going short on futures and long on spot positions. This strategy ensures that the yield remains unchanged by market conditions if held until maturity. No matter the price fluctuations or disparity changes, your yield is secure.",
-    },
-    {
-      id: 2,
-      title: "What happens at expiration?",
-      content:
-        "Upon expiration, the funds are returned to your investment wallet. We're developing an auto-reinvest feature that will allow you to set a threshold limit to automatically re-enter the market or take the returns, giving you seamless control over your investments.",
-    },
-    {
-      id: 3,
-      title: "What do I receive to claim my investment?",
-      content:
-        "You'll receive yield-bearing tokens that accrue value over time, similar to a bond. These tokens represent your growing investment.",
-    },
-    {
-      id: 4,
-      title: "What are the risks involved in this investment?",
-      content:
-        "While we strive to mitigate risks, one potential risk is the bankruptcy of a centralized exchange. However, our diversified approach across multiple exchanges aims to reduce this risk.",
-    },
-    {
-      id: 5,
-      title: "Which exchanges are being utilized by Bond Hive?",
-      content:
-        "Currently, we're utilizing Binance, OKX, Bybit, and Deribit for our operations. We are also in the process of continuously onboarding additional exchanges that offer delivery futures to expand our reach and enhance our service.",
-    },
-    {
-      id: 5,
-      title: "Can I access my investment before maturity?",
-      content:
-        "Yes, while our bonds are designed for holding until maturity to realize the full yield potential, you can exit your position early in the secondary market. Keep in mind that this may affect the final yield received.",
-    },
-  ];
-  const [openDetail, setOpenDetail] = useState(Array(faq.length).fill(false));
-  const handleClick = (index: number) => {
-    const newArr = [...openDetail];
-    newArr[index] = !newArr[index];
-    setOpenDetail(newArr);
-  };
   const apyRandom = [
     12.20, 13.08, 11.96, 12.83, 12.19, 13.07, 11.96, 12.82, 12.84];
-  const getApy = () => {
+  const getRandomApy = () => {
     let randomFigure = Math.floor(Math.random() * apyRandom.length);
 
     return apyRandom[randomFigure];
   };
-  const initialPools = [
-    {
-      name: "ethereum",
-      ticker: "ETH",
-      img: EthBgWhiteLogo,
-      apy: 0,
-      depositAsset: "USDT/USDC",
-      minimum: 100,
-      maturity: "28th, June 2024",
-    },
-    {
-      name: "bitcoin",
-      ticker: "BTC",
-      img: BTCBgLogo,
-      apy: 0,
-      depositAsset: "USDT/USDC",
-      minimum: 3000,
-      maturity: "2nd, March 2024",
-    },
-    {
-      name: "ethereum",
-      ticker: "ETH",
-      img: EthBgWhiteLogo,
-      apy: 0,
-      depositAsset: "USDT/USDC",
-      minimum: 100,
-      maturity: "28th, June 2024",
-    },
-    {
-      name: "bitcoin",
-      ticker: "BTC",
-      img: BTCBgLogo,
-      apy: 0,
-      depositAsset: "USDT/USDC",
-      minimum: 3000,
-      maturity: "2nd, March 2024",
-    },
-  ];
-  const [pools, setPools] = useState(initialPools);
+  // const initialPools = [
+  //   {
+  //     name: "ethereum",
+  //     ticker: "ETH",
+  //     img: EthBgWhiteLogo,
+  //     apy: "10.92%",
+  //     depositAsset: "USDC",
+  //     minimum: 100,
+  //     maturity: "27, Sep 2024",
+  //   },
+  //   {
+  //     name: "bitcoin",
+  //     ticker: "BTC",
+  //     img: BTCBgLogo,
+  //     apy: "11.32%",
+  //     depositAsset: "USDC",
+  //     minimum: 100,
+  //     maturity: "27, Sep 2024",
+  //   },
+  //   {
+  //     name: "ethereum",
+  //     ticker: "ETH",
+  //     img: EthBgWhiteLogo,
+  //     apy: "11.82%",
+  //     depositAsset: "USDC",
+  //     minimum: 100,
+  //     maturity: "27, Dec 2024",
+  //   },
+  //   {
+  //     name: "bitcoin",
+  //     ticker: "BTC",
+  //     img: BTCBgLogo,
+  //     apy: "12.86%",
+  //     depositAsset: "USDC",
+  //     minimum: 100,
+  //     maturity: "27, Dec 2024",
+  //   },
+  // ];
+  const [pools, setPools] = useState(pool);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const interval = setInterval( async () => {
+      const {data} = await GetAPY("https://bondexecution.onrender.com/monitoring/getYields")
       setPools((prevPools) =>
-        prevPools.map((pool) => ({ ...pool, apy: getApy() }))
+        prevPools.map((pool, index) => ({ ...pool, apy: data.data[index].averageYieldPostExecution?.upper }))
       );
     }, 10000);
 
     // Clear interval on component unmount
     return () => clearInterval(interval);
-  }, []);
+  }, [])
+
   return (
     <>
       {/* <div className="w-full h-10 bg-red-600 md:max-lg:flex hidden max-sm:bg-blue-500 max-sm:flex"></div> */}
@@ -203,36 +164,21 @@ export default function Home() {
 
           <div className="w-full mt-14 hero_text flex flex-col justify-center items-center">
             <motion.h1
-              className="big_text md:text-[63px] text-[42px] md:w-7/12 md:max-lg:w-10/12  md:leading-[66px] leading-[50px] "
+              className="big_text md:text-[50px] text-[42px] md:w-7/12 md:max-lg:w-10/12  md:leading-[66px] leading-[50px] "
               variants={getAnimationVariants(0.3)}
               initial="out"
               animate={hreoIsInView ? "in" : "out"}
             >
-              Maximize your investment with <span>Yield Crypto Bonds</span>
+              Secure Your Returns with <span>On-Chain Crypto Bonds</span>
             </motion.h1>
             <motion.p
-              className="des mt-4 md:w-6/12 max-md:px-3 md:max-lg:w-9/12"
+              className="des mt-4 md:w-7/12 max-md:px-3 md:max-lg:w-9/12"
               variants={getAnimationVariants(0.6)}
               initial="out"
               animate={hreoIsInView ? "in" : "out"}
             >
-              Crypto Yield Bond combines the benefits of futures spread trading
-              and funding fees from major centralized cryptocurrency exchanges
-              (CEXs), offering secure, high-yield returns locked in for
-              investors.
+              Harness the power of futures spread trading with Bondhive&#39;s Crypto Bonds which offer a straightforward way to invest with fixed terms and guaranteed yields, similar to traditional bank deposit
             </motion.p>
-            <motion.div
-              className=""
-              variants={getAnimationVariants(0.9)}
-              initial="out"
-              animate={hreoIsInView ? "in" : "out"}
-            >
-              <Link href={"/app"} target="_blank">
-                <button className="mt-10 px-10 max-md:px-16">
-                  Launch dApp
-                </button>
-              </Link>
-            </motion.div>
           </div>
           {/* <div className="preview mx-auto  bg-black">
             // should be inside preview-container
@@ -264,11 +210,11 @@ export default function Home() {
                           <div className="">
                             <h1 className="text-white text-[18px]">
                               {" "}
-                              {pool.ticker}
+                              {pool.name}
                             </h1>
-                            <p className="text-darkPrimText text-[10px] capitalize">
+                            {/* <p className="text-darkPrimText text-[10px] capitalize">
                               {pool.name} Futures and Spot
-                            </p>
+                            </p> */}
                           </div>
                         </div>
                         <div className="APY text-blueish flex items-end gap-1 text-sm text-secText">
@@ -282,7 +228,7 @@ export default function Home() {
                             exit={{ opacity: 0, y: 10 }}
                             transition={{ duration: 0.3 }}
                           >
-                            {pool.apy}%
+                            {pool.apy}
                           </motion.h1>
                           </AnimatePresence>
 
@@ -304,34 +250,24 @@ export default function Home() {
                       <div className="text-[16px] py-4">
                         <div className="maturity flex justify-between">
                           <p className="">Maturity</p>
-                          <p className=" text-paraDarkText">
-                            <span className="text-blueish mr-2 text-right">
-                              28th,
-                            </span>{" "}
-                            June 2024
+                          <p className="text-white ">
+                              {pool.expiration}
                           </p>
                         </div>
                         <div className="deposit_assets flex justify-between items-center my-4">
                           <p className="">Deposit assets</p>
-                          <div className="Deposit_asset text-blueish  flex">
-                            <div className="asset_logo flex items-center -ml-4">
-                              <Image
-                                src={EthBgWhiteLogo}
-                                width={25}
-                                height={25}
-                                alt="token-img"
-                                className=""
-                              />
+                          <div className="Deposit_asset text-blueish  flex items-center gap-2">
+                            <div className="asset_logo">
                               <Image
                                 src={UsdcBgLogo}
                                 width={25}
                                 height={25}
                                 alt="token-img"
-                                className="-ml-2 relative z-9"
+                                className="relative"
                               />
                             </div>
-                            <h1 className="text-[16px] mb-1 ml-2">
-                              {pool.depositAsset}
+                            <h1 className="text-[16px]">
+                              {pool.tokenSymbol}
                             </h1>
                           </div>
                         </div>
@@ -340,22 +276,17 @@ export default function Home() {
                           <p className=" text-blueish">
                             ${pool.minimum}
                             <span className="text-[13px] text-paraDarkText ml-2">
-                              -{pool.minimum} USDT
+                              -{pool.minimum} USDC
                             </span>
                           </p>
                         </div>
                       </div>
                       <button
-                        className={`w-full button1 flex items-center justify-center px-9 py-3 gap-1`}
+                        className={`w-full button2 flex items-center justify-center px-9 py-3 gap-1`}
                         // onClick={() => setOpenState(true)}
                       >
-                        <p className="text-sm">Launch Dapp</p>
-                        <Image
-                          src={chervonRight}
-                          width={13}
-                          height={13}
-                          alt="chervonRight"
-                        />
+                        <p className="text-sm">Invest Now</p>
+                        <ChevronRightIcon className="w-[13px] h-[13px]"/>
                       </button>
                     </div>
                   ))}
@@ -421,7 +352,7 @@ export default function Home() {
               variants={getAnimationVariants(0.3)}
               initial="out"
               animate={howItWorksRefIsInView ? "in" : "out"}
-              className="medium_title my-4 md:text-[44px] text-2xl"
+              className="medium_title my-4 md:text-[34px] text-2xl"
             >
               How It Works
             </motion.h1>
@@ -483,23 +414,13 @@ export default function Home() {
         >
           <motion.div className="flex flex-col justify-center items-center gap-2 max-md:px-5">
             <motion.h1
-              className="medium_title  md:w-6/12 text-center md:text-[44px] text-2xl md:leading-[51px]"
+              className="medium_title text-center md:text-[44px] text-2xl md:leading-[51px]"
               variants={getAnimationVariants(0)}
               initial="out"
               animate={featuresIsInView ? "in" : "out"}
             >
-              Bondhive’s secret to assured profit.
+              Features
             </motion.h1>
-            <motion.p
-              variants={getAnimationVariants(0.3)}
-              initial="out"
-              animate={featuresIsInView ? "in" : "out"}
-              className="subtitle_p md:w-6/12 text-center"
-            >
-              In markets where the price of futures contracts is higher than the
-              current market price, known as contango, investors have the
-              opportunity to profit from this disparity.
-            </motion.p>
           </motion.div>
 
           <motion.div className="flex flex-wrap max-md:flex-col gap-7 md:mt-16 mt-10 assured_profit mx-auto relative px-5">
@@ -541,9 +462,9 @@ export default function Home() {
                 alt="right"
                 className="arrow my-3 mt-5"
               />
-              <h2 className="text-priText mb-1">Secured Arbitrage</h2>
+              <h2 className="text-priText mb-1">Liquidity in Secondary Market</h2>
               <p className="text-secText  text-[14px]">
-                Lock in yields with BondHives arbitrage strategy
+              Trading and Bond buybacks provide liquidity to bond holders
               </p>
             </motion.div>
             <motion.div
@@ -559,9 +480,9 @@ export default function Home() {
                 alt="right"
                 className="arrow my-3 mt-5"
               />
-              <h2 className="text-priText mb-1">Secured Arbitrage</h2>
+              <h2 className="text-priText mb-1">Systematic Risk Mitigation</h2>
               <p className="text-secText  text-[14px]">
-                Lock in yields with BondHives arbitrage strategy
+              Third party custodian provides off-exchange settlement
               </p>
             </motion.div>
           </motion.div>
@@ -591,8 +512,8 @@ export default function Home() {
                 alt="right"
                 className="absolute left-0 right-0 top-0 w-[1500px] opacity-15 hidden md:block -z-10"
               />
-              <div className="flex flex-wrap items-center gap-4 my-20 justify-center md:max-lg:justify-start md:px-0 px-10">
-                <motion.div
+              <div className="flex flex-wrap items-center gap-10 my-20 justify-center md:max-lg:justify-start md:px-0 px-10">
+                {/* <motion.div
                   variants={getAnimationVariants(0.3)}
                   initial="out"
                   animate={historyYield2InView ? "in" : "out"}
@@ -641,6 +562,51 @@ export default function Home() {
                       />
                     </div>
                   </div>
+                </motion.div> */}
+                <motion.div
+                  variants={getAnimationVariants(0.3)}
+                  initial="out"
+                  animate={historyYield2InView ? "in" : "out"}
+                  className="btc_avg w-[340px] max-md:w-[390px] h-[400px] card relative"
+                >
+                  <div className="avg_inner absolute right-0 bottom-0 pt-5 w-[300px] max-md:w-11/12 h-[364px]">
+                    <div className="flex justify-between items-center px-5">
+                      <div className="">
+                        <div className="flex">
+                          <h2 className="text-[16px] text-darkPrimText mr-3">
+                          BTC Avg Yield
+                          </h2>
+                          <div className="time_tag flex items-center gap-1 px-[5px] py-[2px]">
+                            {" "}
+                            <Image
+                              src={Calendar}
+                              width={14}
+                              height={14}
+                              alt="right"
+                              className=""
+                            />{" "}
+                            <p className="text-[13px] text-[#A586FE]">Sept-28</p>
+                          </div>
+                        </div>
+                        <h1 className="text-3xl text-white mt-2 brFirma_font">
+                        15.69%
+                        </h1>
+                      </div>
+                    </div>
+                    <div className="mt-7">
+                      <p className="text-white absolute bottom-5 w-[270px] text-[14px] ml-5">
+                        Displaying the average APY for the BTC futures contract
+                        expiring on September
+                      </p>
+                      <Image
+                        src={MediumChartBg}
+                        width={394}
+                        height={248}
+                        alt="right"
+                        className="absolute bottom-0"
+                      />
+                    </div>
+                  </div>
                 </motion.div>
                 <motion.div
                   variants={getAnimationVariants(0.6)}
@@ -664,7 +630,7 @@ export default function Home() {
                               alt="right"
                               className=""
                             />{" "}
-                            <p className="text-[13px] text-[#A586FE]">Mar-24</p>
+                            <p className="text-[13px] text-[#A586FE]">March-24</p>
                           </div>
                         </div>
                         <h1 className="text-3xl text-white mt-2 brFirma_font">
@@ -687,7 +653,7 @@ export default function Home() {
                     </div>
                   </div>
                 </motion.div>
-                <motion.div
+                {/* <motion.div
                   variants={getAnimationVariants(0.9)}
                   initial="out"
                   animate={historyYield2InView ? "in" : "out"}
@@ -706,7 +672,7 @@ export default function Home() {
                       Built for speed with 50ms interactions and real-time sync.
                     </p>
                   </div>
-                </motion.div>
+                </motion.div> */}
               </div>
             </div>
             <motion.div
@@ -783,13 +749,10 @@ export default function Home() {
             >
               <Link href={"/contact"}> 
               <button
-                className={`button1 inline-flex items-center px-[20px] py-[10px] gap-3 mr-3`}
+                className={`button1 mt-3 inline-flex items-center px-[20px] py-[10px] gap-3 mr-3`}
               >
                 <div className="">Reach Out</div>
               </button>
-              </Link>
-              <Link href={"/app"} target="_blank">
-                <button className="mt-10 button2 px-6 ml-3 h-[40px]">Launch dApp</button>
               </Link>
             </motion.div>
           </div>

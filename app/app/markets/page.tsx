@@ -14,106 +14,20 @@ import { ethers } from "ethers";
 import DAppHeader from "@/app/components/navigations/dAppHeader";
 import DappFooter from "@/app/components/navigations/dAppFooter";
 import {
+  AnalyticsIcon,
   ApyArrowIcon,
   ArrowRightUpGrey,
   ArrowRightUpWhite,
   EthBgWhiteLogo,
   EthLogo,
+  InvestIcon,
+  UsdcBgLogo,
 } from "@/app/components/assets";
 import Charts from "./chart";
-import { dayData, weekData } from "./priceData";
+import { apyData,priceData } from "./priceData";
+import Link from "next/link";
 
 const MainDapp = () => {
-  // const {setConnectorWalletAddress, connectorWalletAddress, poolReserve, setPoolReserve,transactionsStatus,setSelectedPool, selectedPool} = UseStore()
-  // const [openState, setOpenState] = useState(false)
-  // const pool = [
-  //   {
-  //     name: "ethereum",
-  //     ticker: "ETH",
-  //     img: EthBgWhiteLogo,
-  //     apy: 12.45,
-  //     depositAsset: "USDT/USDC",
-  //     minimum: 100,
-  //     maturity: "28th, June 2024",
-  //   },
-  //   {
-  //     name: "bitcoin",
-  //     ticker: "BTC",
-  //     img: BTCBgLogo,
-  //     apy: 19.62,
-  //     depositAsset: "USDT/USDC",
-  //     minimum: 3000,
-  //     maturity: "2nd, March 2024",
-  //   },
-  //   {
-  //     name: "ethereum",
-  //     ticker: "ETH",
-  //     img: EthBgWhiteLogo,
-  //     apy: 12.45,
-  //     depositAsset: "USDT/USDC",
-  //     minimum: 100,
-  //     maturity: "28th, June 2024",
-  //   },
-  //   {
-  //     name: "bitcoin",
-  //     ticker: "BTC",
-  //     img: BTCBgLogo,
-  //     apy: 19.62,
-  //     depositAsset: "USDT/USDC",
-  //     minimum: 3000,
-  //     maturity: "2nd, March 2024",
-  //   },
-  // ];
-  // const [selectedNetwork] = React.useState(TESTNET_DETAILS);
-  // const getReserveContractCal = async (
-  //   id: string,
-  //   txBuilder: TransactionBuilder,
-  //   connection: any,
-  //   destinationPubKey: string | null = null,
-  // ) => {
-  //   console.log("id", id);
-  //   const contract = new Contract(id);
-  //   if ( !destinationPubKey ) {
-  //     console.log("destinationPubKey is null");
-  //     return false;
-  //   }
-  //   const tx = txBuilder
-  //     .addOperation(
-  //       contract.call("get_rsrvs"),
-  //     )
-  //     .setTimeout(30)
-  //     .build();
-
-  //   const result = await simulateTx<string>(tx, connection);
-  //   console.log("result", result);
-  //   console.log("result.toString()", result.toString());
-  //   return ethers.formatUnits(result, pool[0].tokenDecimals);
-  // };
-
-  // const getPoolReserve = async (poolIndex: number) => {
-  //   const txBuilderBalance = await getTxBuilder(
-  //     connectorWalletAddress!,
-  //     BASE_FEE,
-  //     provider,
-  //     selectedNetwork.networkPassphrase
-  //   );
-
-  //   const poolReserve: any = await getReserveContractCal(pool[poolIndex].contractAddress, txBuilderBalance, provider, connectorWalletAddress);
-  //   setPoolReserve({[poolIndex]: parseFloat(poolReserve).toFixed(2).toString()})
-  //   console.log("poolReserve", poolReserve);
-  //   return poolReserve
-  // }
-
-  // useEffect(() => {
-  //   console.log({connectorWalletAddress})
-  //   if(connectorWalletAddress){
-  //     pool.forEach((pool, index) =>{
-  //       getPoolReserve(index)
-  //     } )
-  //   }
-  // }, [connectorWalletAddress, transactionsStatus])
-
-  // console.log({selectedPool})
   const ourProducts = [
     {
       name: "APY",
@@ -178,9 +92,9 @@ const MainDapp = () => {
     <>
       <div className="dapp">
         <DAppHeader />
-        <div className="md:w-11/12 md:max-lg:w-11/12 mx-auto md:pt-24 pt-8 px-5 max-w-[1500px]">
-          <div className="flex gap-8">
-            <div className="left w-4/12">
+        <div className="lg:w-11/12 md:max-lg:w-11/12 mx-auto md:pt-24 pt-8 md:px-5 max-w-[1500px]">
+          <div className="flex gap-8 max-md:flex-col">
+            <div className="left w-4/12 max-md:w-11/12 md:max-lg:w-6/12 max-md:mx-auto">
               <div
                 // variants={getAnimationVariants(0.6)}
                 // initial="out"
@@ -206,10 +120,10 @@ const MainDapp = () => {
                 </p>
                 <div className="progress_bar">
                   <div className="mb-1 text-priBlue text-sm font-semibold">
-                    45 / 100 bhUSD Filled
+                    $4.5m / $50m filled
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4 dark:bg-gray-700">
-                    <div className="bg-priBlue h-2.5 rounded-full  w-[45%]"></div>
+                    <div className="bg-priBlue h-2.5 rounded-full  w-[9%]"></div>
                   </div>
                 </div>
               </div>
@@ -217,7 +131,7 @@ const MainDapp = () => {
                 className={`product_button inline-flex items-center px-10 py-2 gap-2 my-5`}
               >
                 <p className="text-[13px] text-darkPrimText uppercase">
-                  GO TO LP
+                Go to Issuance
                 </p>
                 <Image
                   src={ArrowRightUpGrey}
@@ -252,7 +166,7 @@ const MainDapp = () => {
                       <p className="text-secText text-sm">Balance: 0</p>
                     </div>
                     <div className="swap_input border-border_pri border-b pb-5 px-5">
-                      <div className="input1 flex text-secText max-md:py-[16px] block w-full pl-3 text-[16px] outline-none bg-dappHeaderBg border-border_pri border rounded-md">
+                      <div className="input1 flex text-secText block w-full pl-3 text-[16px] outline-none bg-dappHeaderBg border-border_pri border rounded-md">
                         <button
                           className="w-6/12 border-r py-3 border-border_pri"
                           type="button"
@@ -260,12 +174,12 @@ const MainDapp = () => {
                           <div className="flex items-center justify-between pr-2">
                             <div className="flex items-center gap-2">
                               <Image
-                                src={EthBgWhiteLogo}
+                                src={UsdcBgLogo}
                                 width={20}
                                 className=""
                                 alt=""
                               />
-                              <p className="text-sm">USDC</p>
+                              <p className="text-sm">bhETH-Sep2024</p>
                             </div>
 
                             <ChevronDownIcon className="w-4" />
@@ -290,7 +204,7 @@ const MainDapp = () => {
                       <div className="flex items-center justify-between mb-1">
                         <p className="text-white text-sm">Output</p>
                       </div>
-                      <div className="input1 flex text-secText max-md:py-[16px] block w-full pl-3 text-[16px] outline-none bg-dappHeaderBg border-border_pri border rounded-md">
+                      <div className="input1 flex text-secText block w-full pl-3 text-[16px] outline-none bg-dappHeaderBg border-border_pri border rounded-md">
                         <button
                           className="w-6/12 border-r py-3 border-border_pri"
                           type="button"
@@ -298,12 +212,12 @@ const MainDapp = () => {
                           <div className="flex items-center justify-between pr-2">
                             <div className="flex items-center gap-2">
                               <Image
-                                src={EthBgWhiteLogo}
+                                src={UsdcBgLogo}
                                 width={20}
                                 className=""
                                 alt=""
                               />
-                              <p className="text-sm">bhUSD</p>
+                              <p className="text-sm">Usdc</p>
                             </div>
 
                             <ChevronDownIcon className="w-4" />
@@ -331,9 +245,9 @@ const MainDapp = () => {
                 </div>
               </div>
             </div>
-            <div className="right w-8/12">
-              <div className="flex items-center gap-5">
-                <div className="w-1/2 card relative flex items-center justify-between px-4">
+            <div className="right w-8/12 max-md:w-11/12 md:max-lg:w-6/12 max-md:mx-auto">
+              <div className="flex max-lg:flex-col items-center gap-5">
+                <div className="w-1/2 max-lg:w-full card relative flex items-center justify-between px-4">
                   <div className="flex items-center gap-2">
                     <Image
                       src={EthBgWhiteLogo}
@@ -343,7 +257,7 @@ const MainDapp = () => {
                       className=""
                     />
                     <div className="">
-                      <h1 className="text-white text-sm">ETH - Jun ‘24</h1>
+                      <h1 className="text-white text-sm">ETH - Sept ‘24</h1>
                       <p className="text-darkPrimText text-sm capitalize">
                         Bondhive
                       </p>
@@ -357,9 +271,9 @@ const MainDapp = () => {
                     </p>
                   </button>
                 </div>
-                <div className="w-1/2 card relative flex items-center justify-between px-4">
+                <div className="w-1/2 max-lg:w-full card relative flex items-center justify-between px-4">
                   <div className="flex items-center gap-1 text-sm">
-                    <h1 className="text-white ">28 June 2024</h1>
+                    <h1 className="text-white ">28 Sep 2024</h1>
                     <p className="text-darkPrimText  capitalize">
                       19 days to maturity
                     </p>
@@ -374,11 +288,16 @@ const MainDapp = () => {
                 </div>
               </div>
               <div className="flex items-start gap-1  py-2 px-3 border-priBlue border rounded-lg my-6">
-                  <ExclamationCircleIcon className="w-[25px] text-priBlue" fill="blue"/>
-                  <h2 className="text-priText text-sm">
-                  Investors gets locked yield if they hold till maturity, however, they can sell the bond in open market or buyback according to market conditions
-                  </h2>
-                </div>
+                <ExclamationCircleIcon
+                  className="w-[25px] max-md:w-[50px] text-priBlue"
+                  fill="blue"
+                />
+                <h2 className="text-priText text-sm">
+                  Investors gets locked yield if they hold till maturity,
+                  however, they can sell the bond in open market or buyback
+                  according to market conditions
+                </h2>
+              </div>
               <div className="stats w-full bg-red-60">
                 <div className="selectTab text-darkPrimText mx-auto bg-red-60">
                   <ul className="flex p-[6px] bg-selectTabBg rounded-md  text-sm  justify-between ">
@@ -399,91 +318,91 @@ const MainDapp = () => {
                 </div>
 
                 {/* Should be for each tab */}
-                {
-                  selectTabs['apy'] && (
-                    <div className="text-white my-5">
-                    <h1 className="font-semibold text-xl">14% <span className="text-sm text-darkPrimText">0.3972% (Past 7d)</span></h1>
-  
+                {selectTabs["apy"] && (
+                  <div className="text-white my-5">
+                    <h1 className="font-semibold text-xl">
+                      14%{" "}
+                      <span className="text-sm text-darkPrimText">
+                        0.3972% (Past 7d)
+                      </span>
+                    </h1>
+
                     <div className="chart_main mt-4">
                       <ul className="chart_timeline flex text-[12px] gap-1 bg-dappHeaderBg py-[5px] px-2 rounded-full w-3/12">
-                        <li className="shadowBackDrop px-3 rounded-full py-[3px] cursor-pointer">1m</li>
+                        <li className="shadowBackDrop px-3 rounded-full py-[3px] cursor-pointer">
+                          1m
+                        </li>
                         <li className="px-3 py-[3px]">1H</li>
                         <li className="px-3 py-[3px]">1D</li>
                         <li className="px-3 py-[3px]">1W</li>
                       </ul>
-                      <Charts testData={weekData}/>
+                      <Charts testData={apyData} type={"apy"}/>
                     </div>
                   </div>
-                  )
-                }
-                {
-                  selectTabs['price'] && (
-                    <div className="text-white my-5">
-                    <h1 className="font-semibold text-xl">$25.43 <span className="text-sm text-darkPrimText">9.3972% (Past 7d)</span></h1>
-  
+                )}
+                {selectTabs["price"] && (
+                  <div className="text-white my-5">
+                    <h1 className="font-semibold text-xl">
+                      $25.43{" "}
+                      <span className="text-sm text-darkPrimText">
+                        9.3972% (Past 7d)
+                      </span>
+                    </h1>
+
                     <div className="chart_main mt-4">
                       <ul className="chart_timeline flex text-[12px] gap-1 bg-dappHeaderBg py-[5px] px-2 rounded-full w-3/12">
-                        <li className="shadowBackDrop px-3 rounded-full py-[3px] cursor-pointer">1m</li>
+                        <li className="shadowBackDrop px-3 rounded-full py-[3px] cursor-pointer">
+                          1m
+                        </li>
                         <li className="px-3 py-[3px]">1H</li>
                         <li className="px-3 py-[3px]">1D</li>
                         <li className="px-3 py-[3px]">1W</li>
                       </ul>
-                      <Charts testData={dayData}/>
+                      <Charts testData={priceData} type={"price"}/>
                     </div>
                   </div>
-                  )
-                }
+                )}
               </div>
 
-              <div className="flex card justify-center divide-x divide-border_pri py-4 mt-5">
+              {/* <div className="flex card justify-center divide-x divide-border_pri py-4 mt-5">
                 <div className="px-7 text-center">
                   <h2 className="text-darkPrimText text-sm">Liquidity</h2>
                   <h1 className="text-white brFirma_font font-semibold my-1">$6,765,900.90</h1>
-                  {/* <div className="bg-blueBg items-center gap-1 py-[3px] px-[5px]"> */}
                       <p className="bg-blueBg text-[13px] text-[#A586FE] text-center rounded-md px-5 mx-3">
                         +2.1%
                       </p>
-                    {/* </div> */}
                 </div>
                 <div className="px-7 text-center">
                   <h2 className="text-darkPrimText text-sm">24h Volume</h2>
                   <h1 className="text-white brFirma_font font-semibold my-1">$345,900.90</h1>
-                  {/* <div className="bg-blueBg items-center gap-1 py-[3px] px-[5px]"> */}
                       <p className="bg-blueBg text-[13px] text-[#A586FE] text-center rounded-md px-5 mx-3">
                         +2.1%
                       </p>
-                    {/* </div> */}
                 </div>
                 <div className="px-5 text-center">
                   <h2 className="text-darkPrimText text-sm">Underlying APY</h2>
                   <h1 className="text-white brFirma_font font-semibold my-1">0%</h1>
-                  {/* <div className="bg-blueBg items-center gap-1 py-[3px] px-[5px]"> */}
                       <p className="bg-blueBg text-[13px] text-[#A586FE] text-center rounded-md px-5 mx-3">
                         +0%
                       </p>
-                    {/* </div> */}
                 </div>
                 <div className="px-7 text-center">
                   <h2 className="text-darkPrimText text-sm">Implied APY</h2>
                   <h1 className="text-white brFirma_font font-semibold my-1">89.90%</h1>
-                  {/* <div className="bg-blueBg items-center gap-1 py-[3px] px-[5px]"> */}
                       <p className="bg-blueBg text-[13px] text-[#A586FE] text-center rounded-md px-5 mx-3">
                         +2.1%
                       </p>
-                    {/* </div> */}
                 </div>
                 <div className="px-7 text-center">
                   <h2 className="text-darkPrimText text-sm">Long Yield APY</h2>
                   <h1 className="text-white brFirma_font font-semibold my-1">89%</h1>
-                  {/* <div className="bg-blueBg items-center gap-1 py-[3px] px-[5px]"> */}
                       <p className="bg-blueBg text-[13px] text-[#A586FE] text-center rounded-md px-5 mx-3">
                         +0%
                       </p>
-                    {/* </div> */}
                 </div>
-              </div>
-
-              <div className="history text-darkPrimText mx-auto bg-red-60 mt-14">
+              </div> */}
+              <div className="max-lg:overflow-x-scroll mb-16">
+                <div className="history text-darkPrimText mx-auto bg-red-60 mt-14  max-lg:w-[780px]">
                   <ul className="flex p-[6px] bg-selectTabBg rounded-md  text-sm  justify-between ">
                     {history.map((el, index) => (
                       <li
@@ -500,12 +419,42 @@ const MainDapp = () => {
                     ))}
                   </ul>
                 </div>
+              </div>
 
-                <div className="h-52 text-white text-center flex justify-center flex-col mb-20">
-                  <p>You have No Trade history for this market.</p>
-                </div>
+              <div className="h-52 text-white text-center flex justify-center flex-col mb-20">
+                <p>You have No Trade history for this market.</p>
+              </div>
             </div>
           </div>
+        </div>
+
+        <div className="bg-[#170a28] border-t border-dappHeaderBorder fixed z-[999] w-full bottom-0 py-6 hidden max-lg:block">
+          <ul className="flex justify-center gap-10 pl-3">
+          <Link href={"/app"}>
+            <li className="flex items-center gap-2">
+              <Image
+                src={InvestIcon}
+                width={20}
+                height={20}
+                alt="InvestIcon"
+                className=""
+              />
+              <p className="text-[#937ED6]">Invest</p>
+            </li>
+            </Link>
+            <Link href={"/app/markets"}>
+              <li className="flex items-center gap-2">
+                <Image
+                  src={AnalyticsIcon}
+                  width={20}
+                  height={20}
+                  alt="InvestIcon"
+                  className=""
+                />
+                <p className="text-paraDarkText">Markets</p>
+              </li>
+            </Link>
+          </ul>
         </div>
         <DappFooter />
       </div>

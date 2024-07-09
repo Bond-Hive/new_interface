@@ -245,7 +245,7 @@ export const mintTokens = async ({
     }
 
     const preparedTransaction = await server.prepareTransaction(tx.build());
-
+    // console.log({preparedTransaction, tx})
     return preparedTransaction.toXDR();
   } catch (err) {
     console.log("err");
@@ -268,7 +268,6 @@ export const withdrawTokens = async ({
   server: SorobanRpc.Server;
 }) => {
   const contract = new Contract(tokenId);
-
   try {
     const tx = txBuilderAdmin
       .addOperation(
@@ -281,7 +280,6 @@ export const withdrawTokens = async ({
         ),
       )
       .setTimeout(TimeoutInfinite);
-
     if (memo?.length > 0) {
       tx.addMemo(Memo.text(memo));
     }

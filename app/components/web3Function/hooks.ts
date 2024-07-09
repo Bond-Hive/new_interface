@@ -22,8 +22,21 @@ const hasFreighterInstalled = async () => {
         console.log({error})
     }
 }
+const formatBigIntTimestamp = (timestamp: any) => {
+    const timestampNumber = Number(timestamp);
+
+    const date = new Date(timestampNumber * 1000);
+  
+    const dateOptions:any = { month: 'short', day: 'numeric', year: 'numeric' };
+    const timeOptions:any = { hour: 'numeric', minute: 'numeric', second: 'numeric' };
+    
+    let formattedDate = date.toLocaleDateString('en-US', dateOptions);
+    const formattedTime = date.toLocaleTimeString('en-US', timeOptions);
+    return `${formattedDate}, ${formattedTime}`;
+  };
 
 export {
     hasPreviouslyAllowed,
-    hasFreighterInstalled
+    hasFreighterInstalled,
+    formatBigIntTimestamp
 }

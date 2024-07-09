@@ -1,6 +1,3 @@
-# new_interface
-🔶 Repository for the new and improved interface. This project aims to enhance the user experience with updated design and functionalities.
-
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started

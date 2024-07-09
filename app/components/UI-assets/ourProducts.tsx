@@ -59,17 +59,19 @@ const OurProducts = () => {
   const ourProductsCardRefIsInView = useInView(ourProductsCardRef);
   const ourProducts = [
     {
-      name: "Fixed Deposits (Bonds)",
+      name: "Crypto Bonds (Fixed Deposits)",
       value: "depositBond",
+      tag: 'live',
     },
     {
       name: "Secondary Trading Market",
       value: "secondaryMarket",
+      tag: 'soon',
     },
     {
       name: "bhUSD Stablecoin",
       value: "bhUSD",
-      comingSoon: true,
+      tag: 'soon',
     },
   ];
   const [selectTabs, setSelectTabs] = useState<any>({
@@ -96,7 +98,7 @@ const OurProducts = () => {
           animate={ourProductsIsInView ? "in" : "out"}
           id="ourproducts"
         >
-          <h1 className="text-white mt-5 md:text-[44px] text-2xl text-center font-semibold mb-10">
+          <h1 className="text-white mt-5 md:text-[34px] text-2xl text-center font-semibold mb-10">
             Our Products
           </h1>
         </motion.div>
@@ -111,23 +113,21 @@ const OurProducts = () => {
               opportunity to profit from this disparity.
             </motion.p> */}
         <div className="xl:w-[1060px] w-11/12 mx-auto">
-          <div className="max-sm:overflow-x-scroll mb-16">
-            <div className="selectTab text-darkPrimText flex justify-center max-md:w-[680px] max-md:mx-auto bg-red-60">
-              <ul className="flex p-[6px] bg-selectTabBg rounded-md max-md:-ml-5">
+          <div className="overflow-x-auto mb-16">
+            <div className="selectTab text-darkPrimText flex justify-center max-lg:w-[880px] max-md:mx-auto bg-red-60">
+              <ul className="flex p-[6px] bg-selectTabBg rounded-md max-md:-ml-5 ">
                 {ourProducts.map((el, index) => (
                   <li
                   key={index}
-                    className={` md:px-7 px-6 py-3 rounded-md lg:text-lg text-sm cursor-pointer ${
-                      el.comingSoon && "flex item-center gap-1"
-                    } ${
+                    className={` md:px-7 px-6 py-3 rounded-md lg:text-md text-sm cursor-pointer flex item-center gap-2 ${
                       selectTabs[el.value] ? "bg-dappHeaderBg" : "less_opacity"
                     }`}
                     onClick={() => handleSelect(el.value)}
                   >
                     <p className="capitalize">{el.name}</p>
-                    {el.comingSoon && (
-                      <p className=" px-2 bg-[#57B6FA] text-[14px] rounded-md text-white">
-                        soon
+                    {(
+                      <p className={`capitalize px-2 text-[12px] rounded-md  ${el.tag == "soon" ? "bg-[#57B6FA] text-white" : "bg-gold text-[#000000]"}`}>
+                        {el.tag}
                       </p>
                     )}
                   </li>
@@ -144,9 +144,9 @@ const OurProducts = () => {
               animate={selectTabs["depositBond"] ? "in" : "out"}
             >
               <div className="md:w-1/2 md:pr-8">
-                <h1 className="text-4xl mb-4">Fixed Deposits (Bonds)</h1>
+                <h1 className="text-3xl mb-4">Crypto Bonds (Fixed Deposits)</h1>
                 <p className="text-darkPrimText text-sm ">
-                BondHive’s Fixed Deposits redefine saving by offering bonds that provide predictable and stable returns. These digital bonds bring the security and familiarity of fixed deposits to the blockchain. Enjoy the certainty of fixed yields combined with the transparency and security that blockchain technology can offer
+                Discover the stability of Bondhive Crypto Bonds, your on-chain solution for fixed-term, guaranteed returns. Just like traditional fixed deposits, but secured on the blockchain for transparency and safety
 
                 </p>
                 <div className="flex items-center text-darkPrimText gap-5 my-5">
@@ -279,7 +279,7 @@ const OurProducts = () => {
               animate={selectTabs["bhUSD"] ? "in" : "out"}
             >
               <div className="md:w-1/2 md:pr-8">
-                <h1 className="text-4xl mb-4">bhUSD Stablecoin</h1>
+                <h1 className="text-3xl mb-4">bhUSD Stablecoin</h1>
                 <p className="text-darkPrimText text-sm ">
                 In conjunction with our secure bonds, anticipate the introduction of bhUSD, BondHive’s proprietary stablecoin. Built on the stability of our bonds, bhUSD aims to provide a dependable medium of exchange within the blockchain space. This integration ensures that the underlying value of bhUSD is as stable as the bonds backing it, facilitating smoother transactions and offering a solid foundation for financial operations on our platform.
                 </p>

@@ -9,7 +9,7 @@ const Partners = () => {
       <p className="text-center text-priText">Building on and alongside the largest ecosystems</p>
       <div className="brands flex md:gap-[80px] gap-10 justify-center mt-8 flex-wrap">
         {
-          Array(5).fill('').map((el, index) => (
+          Array(1).fill('').map((el, index) => (
             <Image
             src={StellarBrand}
             width={145}

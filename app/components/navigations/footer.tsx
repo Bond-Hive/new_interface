@@ -18,9 +18,8 @@ const Footer = () => {
             <Image src={BondHiveLogo} width={29} height={29} alt="bondhive" />
             <p className="text-md font-semibold text-white">Bondhive</p>
           </div>
-          <p className="w-[334px] text-sm">
-            Bondhive is a crypto product helping users Maximize Investment
-            Returns by Locking in Yield with Crypto Bonds
+          <p className="w-[434px] text-sm">
+          BondHive leverages blockchain technology to bring traditional financial instruments, such as bonds, into the DeFi space, offering predictable, stable returns similar to fixed deposits but with the flexibility and efficiency of decentralized finance.
           </p>
         </div>
         <div className="">
@@ -32,7 +31,7 @@ const Footer = () => {
           </ul>
 
           <div className="socials flex gap-4">
-            <Link href={"https://t.me/+q51iBH0AuB43MmU1"} target="_blank">
+            <Link href={"https://t.me/+AjBlPFAjjLYyNWNl"} target="_blank">
             <div className="each-socials w-[40px] h-[40px]">
             <Image src={TGLogo} width={16} height={24} alt="bondhive" />
             </div>
@@ -47,7 +46,7 @@ const Footer = () => {
                 />
               </div>
             </Link>
-            <Link href={"https://x.com/BondHive"} target="_blank">
+            {/* <Link href={"https://x.com/BondHive"} target="_blank">
               <div className="each-socials w-[40px] h-[40px]">
                 <Image src={RedditLogo} width={20} height={20} alt="bondhive" />
               </div>
@@ -71,7 +70,7 @@ const Footer = () => {
                   alt="bondhive"
                 />
               </div>
-            </Link>
+            </Link> */}
           </div>
         </div>
       </div>

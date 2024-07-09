@@ -22,12 +22,13 @@ import { ERRORS } from "@/app/helpers/error";
 import Loading from "../UI-assets/loading";
 import { pool } from "@/app/constants/poolOptions";
 import { Contract, TransactionBuilder } from "@stellar/stellar-sdk";
-const WithdrawFunds: React.FC<{ setOpenState: any; shareBalance: any }> = ({
-  setOpenState,
-  shareBalance,
+import { floatFigure, formatFigures, formatWithCommas } from "../web3FiguresHelpers";
+const WithdrawFunds: React.FC<{ setOpenState: any}> = ({
+  setOpenState
 }) => {
   const [depositAmount, setDepositAmount] = useState("");
   const [memo, setMemo] = useState("");
+  const [withdrawalEnabled, setWihdrawalEnabled] = useState(false)
   const {
     connectorWalletAddress,
     userBalance,
@@ -38,46 +39,15 @@ const WithdrawFunds: React.FC<{ setOpenState: any; shareBalance: any }> = ({
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [fee, setFee] = React.useState(BASE_FEE);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(0);
   const [isGettingFee, setIsGettingFee] = useState<Boolean | null>(null);
-  const contractAddress = pool[0].contractAddress;
+  const contractAddress = selectedPool.contractAddress;
   const [selectedNetwork] = React.useState(TESTNET_DETAILS);
   const [connectionError, setConnectionError] = useState(null as string | null);
   const [openXDR, setOpenXDR] = useState(false);
   const [signedXdr, setSignedXdr] = React.useState("");
   const [txResultXDR, setTxResultXDR] = useState<String | null>(null);
   const [notEnoughBal, setNotEnoughBal] = useState(false);
-  // after depoist input proceed to the next
-  // const getFee = async () => {
-  //   setIsGettingFee(true);
-
-  //   try {
-  //     const builder = await getTxBuilder(
-  //       connectorWalletAddress!,
-  //       fee,
-  //       provider,
-  //       selectedNetwork.networkPassphrase
-  //     );
-
-  //     const estimatedFee = await getEstimatedFee(
-  //       contractAddress,
-  //       ethers.parseUnits(depositAmount, selectedPool?.tokenDecimals).toString(),
-  //       connectorWalletAddress!,
-  //      memo,
-  //       builder,
-  //       provider
-  //     );
-  //     console.log({estimatedFee})
-  //     setFee(stroopToXlm(estimatedFee).toString());
-  //     setIsGettingFee(false);
-  //   } catch (error) {
-  //     setConnectionError("error getting fee");
-  //     // defaults to hardcoded base fee if this fails
-  //     console.log(error);
-  //     setIsGettingFee(false);
-  //   }
-  // };
-
   const signWithFreighter = async () => {
     setIsSubmitting(true);
 
@@ -97,7 +67,6 @@ const WithdrawFunds: React.FC<{ setOpenState: any; shareBalance: any }> = ({
       txBuilderAdmin,
       server: provider,
     });
-
     try {
       // Signs XDR representing the "mint" transaction
       const signedTx = await signTx(xdr, connectorWalletAddress, kit);
@@ -125,12 +94,50 @@ const WithdrawFunds: React.FC<{ setOpenState: any; shareBalance: any }> = ({
       setIsSubmitting(false);
       setStep(2);
     } catch (error) {
-      console.log(error);
       setIsSubmitting(false);
       setConnectionError(ERRORS.UNABLE_TO_SUBMIT_TX);
     }
   };
 
+
+  const getQuoteCont = async (
+    id: string,
+    txBuilder: TransactionBuilder,
+    connection: any,
+    destinationPubKey: string | null = null,
+    functName: string
+  ) => {
+    const contract = new Contract(id);
+    if (!destinationPubKey) {
+      return false;
+    }
+    const tx = txBuilder
+      .addOperation(
+        contract.call(functName)
+      )
+      .setTimeout(30)
+      .build();
+
+    const result = await simulateTx<string>(tx, connection);
+    return result;
+  };
+  const readContract = async (functName: string) => {
+    const txBuilderBalance = await getTxBuilder(
+      connectorWalletAddress!,
+      BASE_FEE,
+      provider,
+      selectedNetwork.networkPassphrase
+    );
+
+    const result: any = await getQuoteCont(selectedPool.contractAddress, txBuilderBalance, provider, connectorWalletAddress, functName);
+    setWihdrawalEnabled(functName === "deposit_limit" && Number(result) > 0 ? true : false)
+    // console.log({[functName]: result});
+    return result
+  }
+  // console.log({withdrawalEnabled})
+  useEffect(() => {
+    readContract("deposit_limit")
+  })
   useEffect(() => {
     if (signedXdr) {
       submit();
@@ -145,9 +152,8 @@ const WithdrawFunds: React.FC<{ setOpenState: any; shareBalance: any }> = ({
   }, [isGettingFee, connectionError]);
 
   useEffect(() => {
-    if (Number(depositAmount) > Number(userBalance)) {
+    if (Number(depositAmount) > Number(selectedPool.shareBalance)) {
       setNotEnoughBal(true);
-      console.log("userBalance", "Not enough");
     } else {
       setNotEnoughBal(false);
     }
@@ -162,9 +168,9 @@ const WithdrawFunds: React.FC<{ setOpenState: any; shareBalance: any }> = ({
             <div className="modal_content relative w-[550px] max-sm:w-full pb-5 rounded-lg text-[white] border-2 border-borderColor bg-[#1B2132] p-5 max-sm:pb-16">
               <div className="header flex justify-between items-start">
                 <div className="mb-6">
-                  <h1 className="text-lg">Withdrawal</h1>
+                  <h1 className="text-lg">My Position</h1>
                   <p className="text-paraDarkText text-sm">
-                    Provide liquidity to earn from this strategy
+                    Details of my position
                   </p>
                 </div>
                 <div
@@ -182,32 +188,27 @@ const WithdrawFunds: React.FC<{ setOpenState: any; shareBalance: any }> = ({
               </div>
               <div className="currency_container p-3">
                 <div className=" flex justify-between mb-4">
-                  <p className="text-paraDarkText text-sm">Positions</p>
-                  <p className="text-white text-sm">$56,770</p>
+                  <p className="text-paraDarkText text-sm">Available Shares</p>
+                  <p className="text-white text-sm">{formatWithCommas(Number(floatFigure(selectedPool.shareBalance,2)))}</p>
                 </div>
                 <div className=" flex justify-between mb-4">
-                  <p className="text-paraDarkText text-sm">Positions</p>
-                  <p className="text-white text-sm">$56,770</p>
-                </div>
-                <div className=" flex justify-between mb-">
-                  <p className="text-paraDarkText text-sm">Positions</p>
-                  <p className="text-white text-sm">$56,770</p>
+                  <p className="text-paraDarkText text-sm">Estimated redemption value</p>
+                  <p className="text-white text-sm">{formatWithCommas(Number(floatFigure(selectedPool.position,2)))}</p>
                 </div>
               </div>
+              {!withdrawalEnabled && <p className="text-sm text-bluish font-semibold mt-7">Investor can redeem post maturity {selectedPool.expiration} at 8:00 am GMT</p>}
+                <div className="flex max-sm:flex-col justify-between gap-3 mt-4">
+                  <button className="button1 text-paraDarkText w-1/2 max-sm:w-full py-3">Secondary Market (soon)</button>
+                  <button className="button1 text-paraDarkText w-1/2 max-sm:w-full py-3">Buyback (soon)</button>
+                </div>
               <button
-                className={`mt-7 py-3 w-full flex ${
-                  notEnoughBal ? "button1 text-paraDarkText" : "proceed"
-                }`}
+               className={`mt-4 py-3 w-full flex ${
+                Number(selectedPool.shareBalance) <= 0 || !withdrawalEnabled ? "button1 text-paraDarkText hover:bg-transparent" : "proceed"
+              }`}
                 onClick={() => setStep(1)}
-                // disabled={notEnoughBal}
+                disabled={Number(selectedPool.shareBalance) <= 0 || !withdrawalEnabled}
               >
-                {isGettingFee ? (
-                  <div className="mx-auto">
-                    <Loading />
-                  </div>
-                ) : (
-                  <p className="mx-auto">Proceed to withdraw</p>
-                )}
+                  <p className="mx-auto">Proceed to Redeem</p>
               </button>
             </div>
           )}
@@ -216,9 +217,9 @@ const WithdrawFunds: React.FC<{ setOpenState: any; shareBalance: any }> = ({
             <div className="modal_content relative w-[550px] max-sm:w-full pb-5 rounded-lg text-[white] border-2 border-borderColor bg-[#1B2132] p-5 max-sm:pb-16">
               <div className="header flex justify-between items-start">
                 <div className="mb-6">
-                  <h1 className="text-lg">Withdrawal</h1>
+                  <h1 className="text-lg">Redeem</h1>
                   <p className="text-paraDarkText text-sm">
-                    Provide liquidity to earn from this strategy
+                    Withdraw from this strategy
                   </p>
                 </div>
                 <div
@@ -256,7 +257,7 @@ const WithdrawFunds: React.FC<{ setOpenState: any; shareBalance: any }> = ({
                       type="tel"
                       id="success"
                       className="bg-transparent  outline-none rounded-r-lg  block text-[34px] text-right max-w-[250px]"
-                      placeholder={shareBalance}
+                      placeholder={selectedPool.shareBalance}
                       name="depositAmount"
                       value={depositAmount}
                       onChange={(e: any) => setDepositAmount(e.target.value)}
@@ -277,7 +278,7 @@ const WithdrawFunds: React.FC<{ setOpenState: any; shareBalance: any }> = ({
                     <p className="text-[14px] text-paraDarkText">
                       Avail. Shares:
                     </p>
-                    <h2 className="text-[14px] text-white">${shareBalance}</h2>
+                    <h2 className="text-[14px] text-white">${selectedPool.shareBalance}</h2>
                   </div>
                   {/* <h2 className="text-[14px] text-paraDarkText">$23,123</h2> */}
                 </div>
@@ -292,13 +293,13 @@ const WithdrawFunds: React.FC<{ setOpenState: any; shareBalance: any }> = ({
               )}
               <button
                 className={`mt-7 py-3 w-full flex ${
-                  notEnoughBal || Number(shareBalance) <= 0 ? "button1 text-paraDarkText" : "proceed"
+                  notEnoughBal || Number(selectedPool.shareBalance) <= 0 ? "button1 text-paraDarkText" : "proceed"
                 }`}
                 // onClick={() => {
                 //   !isGettingFee &&  submit();
                 // }}
                 onClick={signWithFreighter}
-                disabled={notEnoughBal}
+                disabled={notEnoughBal || Number(selectedPool.shareBalance) <= 0}
               >
                 {isSubmitting ? (
                   <div className="mx-auto">
@@ -350,8 +351,8 @@ const WithdrawFunds: React.FC<{ setOpenState: any; shareBalance: any }> = ({
                   </h1>
                 </div>
                 <div className=" flex justify-between mb-4 items-center">
-                  <h1 className="text-paraDarkText">Withdrew</h1>
-                  <h1 className="text-1xl">{depositAmount} USDT</h1>
+                  <h1 className="text-paraDarkText">Burned Bonds</h1>
+                  <h1 className="text-1xl">{depositAmount}</h1>
                 </div>
                 <div className=" flex justify-between mb-4 items-center">
                   <h1 className="text-paraDarkText">Memo</h1>

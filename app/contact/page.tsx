@@ -6,6 +6,8 @@ import { motion } from "framer-motion";
 import { ChervonUp, Dot } from "../components/assets";
 import Header from "../components/navigations/header";
 import Footer from "../components/navigations/footer";
+import emailjs from "@emailjs/browser";
+import Loading from "../components/UI-assets/loading";
 const getAnimationVariants = (delay: Number) => {
   const variants: any = {
     in: {
@@ -23,7 +25,29 @@ const getAnimationVariants = (delay: Number) => {
 const Contact = () => {
   const faqRef: any = useRef(null);
   const faqInView = useInView(faqRef);
+  const form: any = useRef();
+  const [isPending, setIsPending] = useState(false);
+  const sendEmail = (e: any) => {
+    e.preventDefault();
+    setIsPending(true);
+    emailjs
+      .sendForm(
+        "service_6yeh64l",
+        "template_ae6ft2j",
+        form.current,
+        "4-3mciVijUFC0HE--"
+      )
+      .then(
+        (result: any) => {
+          console.log(result.text);
 
+          setIsPending(false);
+        },
+        (error: any) => {
+          console.log(error.text);
+        }
+      );
+  };
   return (
     <>
       <Header />
@@ -50,16 +74,16 @@ const Contact = () => {
               </p>
             </div>
 
-            <form className="md:w-9/12 mx-auto mt-10">
+            <form className="md:w-9/12 mx-auto mt-10" ref={form} onSubmit={sendEmail}>
               <p className="text-sm my-7 text-center text-secText">Request more information, schedule a meeting or share your thoughts on Bondhive</p>
             <div className="mb-6 grid gap-6 gap-y-5 md:grid-cols-2">
               <div>
                 <input
                   type="text"
-                  id="last_name"
+                  id="name"
                   className="text-secText max-md:py-[16px] block w-full p-2 py-4 pl-3 text-[16px] outline-none bg-dappHeaderBg border-border_pri border rounded-md"
                   placeholder="Name*"
-                  name="common"
+                  name="name"
                   // value={input.common}
                   // onChange={(e) => handleInputChange(e)}
                 />
@@ -67,10 +91,10 @@ const Contact = () => {
               <div>
                 <input
                   type="text"
-                  id="last_name"
+                  id="email"
                   className="text-secText max-md:py-[16px] block w-full p-2 py-4 pl-3 text-[16px] outline-none bg-dappHeaderBg border-border_pri border rounded-md"
                   placeholder="Email*"
-                  name="Email"
+                  name="email"
                   // value={input.common}
                   // onChange={(e) => handleInputChange(e)}
                 />
@@ -78,10 +102,10 @@ const Contact = () => {
               <div>
                 <input
                   type="text"
-                  id="last_name"
+                  id="company"
                   className="text-secText max-md:py-[16px] block w-full p-2 py-4 pl-3 text-[16px] outline-none bg-dappHeaderBg border-border_pri border rounded-md"
                   placeholder="Company*"
-                  name="Company"
+                  name="company"
                   // value={input.common}
                   // onChange={(e) => handleInputChange(e)}
                 />
@@ -89,7 +113,7 @@ const Contact = () => {
               <div>
                 <input
                   type="text"
-                  id="last_name"
+                  id="reason"
                   className="text-secText max-md:py-[16px] block w-full p-2 py-4 pl-3 text-[16px] outline-none bg-dappHeaderBg border-border_pri border rounded-md"
                   placeholder="Reason*"
                   name="reason"
@@ -100,16 +124,18 @@ const Contact = () => {
             </div>
             <div>
                 <textarea
-                  id="last_name"
+                  id="message"
                   className="text-secText max-md:py-[16px] h-[300px] block w-full p-2 py-4 pl-3 text-[16px] outline-none bg-dappHeaderBg border-border_pri border rounded-md"
                   placeholder="Message*"
-                  name="Message"
+                  name="message"
                   // value={input.common}
                   // onChange={(e) => handleInputChange(e)}
                 />
               </div>
 
-              <button className="button2 w-full py-4 my-5" onClick={(e) => e.preventDefault()}>Submit</button>
+              <button className="button2 w-full py-4 my-5">{ isPending ? <div className="w-[20px] mx-auto">
+                <Loading/> 
+              </div> : "Submit"}</button>
           </form>
           </div>
         </motion.div>

@@ -22,6 +22,9 @@ import { ERRORS } from "@/app/helpers/error";
 import Loading from "../UI-assets/loading";
 import { pool } from "@/app/constants/poolOptions";
 import { Contract, TransactionBuilder } from "@stellar/stellar-sdk";
+import { ActivateQuote } from "@/app/dataService/dataServices";
+import { floatFigure, formatFigures, formatWithCommas } from "../web3FiguresHelpers";
+import { formatBigIntTimestamp } from "../web3Function/hooks";
 const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
   const [depositAmount, setDepositAmount] = useState("");
   const [memo, setMemo] = useState("")
@@ -37,14 +40,22 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
   const [fee, setFee] = React.useState(BASE_FEE);
   const [step, setStep] = useState(0);
   const [isGettingFee, setIsGettingFee] = useState<Boolean | null>(null);
-  const contractAddress = pool[0].contractAddress;
+  const contractAddress = selectedPool.contractAddress;
   const [selectedNetwork] = React.useState(TESTNET_DETAILS);
   const [connectionError, setConnectionError] = useState(null as string | null);
   const [openXDR, setOpenXDR] = useState(false)
   const [signedXdr, setSignedXdr] = React.useState("");
   const [txResultXDR,setTxResultXDR] = useState<String | null>(null)
   const [notEnoughBal, setNotEnoughBal] = useState(false)
-  const [quote, setQuote] = useState<number | null | string >(null)
+  const [quote, setQuote] = useState<number | null | string >("0")
+  const [minAmountAlert, setMinAmountAlert] = useState(false)
+  const [quoteStatus, setQuoteStatus] = useState<boolean | null>(null)
+  const [isProductExpired, setIsProductExpired] = useState(false)
+  const [quoteActivated, setQuoteActivated] = useState(false)
+  const [quoteActivationLoading, setQuoteActivationLoading] = useState(true)
+  const [quoteProcessAlert, setQuoteProcessAlert] = useState("")
+  const [depositEnabled, setDepositEnabled] = useState(true)
+  const [maturity,setMaturity] = useState(0)
   // after depoist input proceed to the next
   const getFee = async () => {
     setIsGettingFee(true);
@@ -67,14 +78,19 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
       );
       setFee(stroopToXlm(estimatedFee).toString());
       setIsGettingFee(false);
-    } catch (error) {
+    } catch (error: any) {
       setConnectionError("error getting fee");
       // defaults to hardcoded base fee if this fails
       console.log(error);
+      if(error.includes("HostError: Error(Contract, #4)")){
+        setIsProductExpired(true)
+      }else{
+        setIsProductExpired(false )
+      }
       setIsGettingFee(false);
     }
   };
-
+  console.log({isProductExpired,depositEnabled})
   const signWithFreighter = async () => {
     setIsSubmitting(true);
 
@@ -126,17 +142,16 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
     }
   };
 
-  // GET QUOTE READ FUNCTION
+
+
   const getQuoteCont = async (
     id: string,
     txBuilder: TransactionBuilder,
     connection: any,
     destinationPubKey: string | null = null
   ) => {
-    console.log("id", id);
     const contract = new Contract(id);
     if (!destinationPubKey) {
-      console.log("destinationPubKey is null");
       return false;
     }
     const tx = txBuilder
@@ -147,8 +162,6 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
       .build();
 
     const result = await simulateTx<string>(tx, connection);
-    console.log("quoteresult", result);
-    console.log("result.toString()", result.toString());
     return ethers.formatUnits(result, selectedPool.shareDecimals);
   };
   const getQuote = async () => {
@@ -158,12 +171,66 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
       provider,
       selectedNetwork.networkPassphrase
     );
-
+    // setQuoteProcessAlert("Checking Quote...")
     const quote: any = await getQuoteCont(selectedPool.contractAddress, txBuilderBalance, provider, connectorWalletAddress);
-    // setQuote(quote)
-    console.log({quote});
+    setQuoteStatus(Number(quote) > 0 ? true : false)
+    setQuoteActivationLoading(Number(quote) > 0  ? false : true)
+    // setQuoteProcessAlert(Number(quote) > 0  ? "Quote successful." : 'No Quote, Requesting Quote 1/2 done.')
+    setQuote(quote)
     return quote
   }
+
+    //  READ FUNCTION
+  const readContIntr = async (
+    id: string,
+    txBuilder: TransactionBuilder,
+    connection: any,
+    destinationPubKey: string | null = null,
+    functName: string
+  ) => {
+    const contract = new Contract(id);
+    if (!destinationPubKey) {
+      return false;
+    }
+    const tx = txBuilder
+      .addOperation(
+        contract.call(functName)
+      )
+      .setTimeout(30)
+      .build();
+
+    const result = await simulateTx<string>(tx, connection);
+    return result;
+  };
+  const readContract = async (functName: string) => {
+    const txBuilderBalance = await getTxBuilder(
+      connectorWalletAddress!,
+      BASE_FEE,
+      provider,
+      selectedNetwork.networkPassphrase
+    );
+
+    const result: any = await readContIntr(selectedPool.contractAddress, txBuilderBalance, provider, connectorWalletAddress, functName);
+    const now = BigInt(Math.floor(Date.now() / 1000))
+    // console.log({endDatedepositEnabled:formatBigIntTimestamp(result)})
+    setMaturity(result)
+    if(BigInt(result) > now){
+      setDepositEnabled(true)
+    }else{
+      setDepositEnabled(false)
+    }
+
+    // console.log({[functName]: result});
+    return result
+  }
+
+  const calEstimatedBonds = () => {
+   const estimatedBond = Number(quote) * Number(depositAmount)
+   return estimatedBond
+  }
+  useEffect(() => {
+    readContract("maturity")
+  })
 
   useEffect(() => {
     if (signedXdr) {
@@ -181,14 +248,55 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
   useEffect(() => {
     if(Number(depositAmount) > Number(userBalance)){
       setNotEnoughBal(true)
-      console.log("userBalance","Not enough")
     } else{
       setNotEnoughBal(false)
     }
+
+    if(Number(depositAmount) != 0 &&  Number(depositAmount) < 100){
+      setMinAmountAlert(true)
+    }else{
+      setMinAmountAlert(false)
+    }
   }, [depositAmount, userBalance])
+
   useEffect(() => {
+    // console.log("quoteImmediately")
     getQuote()
-  })
+  }, [])
+  // console.log({quoteActivated, quoteStatus, quote})
+  useEffect(() => {
+    if (quoteActivated) {
+      const timer = setTimeout(() => {
+        getQuote();
+        setQuoteActivationLoading(false)
+        setQuoteActivated(false)
+        // console.log({ "getting quote after activation": quote });
+      }, 1000);
+  
+      return () => clearTimeout(timer);
+    }
+  }, [quoteActivated, quoteActivationLoading])
+  
+  useEffect(() => {
+    setQuoteActivationLoading(true)
+    const activate = async () => {
+      setQuoteProcessAlert('Requesting Quote...')
+      try {
+        const {data, isLoading} = await ActivateQuote(contractAddress)
+        if(data){
+          setQuoteActivated(true)
+          setQuoteProcessAlert("Requesting Quote...")
+        }
+        // console.log("quotebefore")
+      } catch (error) {
+        setQuoteActivated(false)
+        setQuoteActivationLoading(false)
+      }
+    }
+    if(quoteStatus === false){
+      activate()
+    }
+  }, [quoteStatus,quoteActivated, quoteActivationLoading])
   return (
     <>
       <div
@@ -201,7 +309,7 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
                 <div className="mb-6">
                   <h1 className="text-lg">Deposit Funds</h1>
                   <p className="text-paraDarkText text-sm">
-                    Provide liquidity to earn from this strategy
+                  Invest asset for Guaranteed Yields
                   </p>
                 </div>
                 <div
@@ -217,6 +325,24 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
                   />
                 </div>
               </div>
+              {minAmountAlert && <p className="text-red-500 text-sm mb-2">Minimum deposit is $100 USDC</p>}
+              <div className="balance flex justify-be  tween">
+                  <div className="flex items-center gap-1 ">
+                    <div className="flex items-center">
+                    <Image
+                      src={Wallet}
+                      width={17}
+                      height={17}
+                      alt="right"
+                      className=""
+                    />
+                    </div>
+                    <h2 className="text-lg text-paraDarkText">
+                      ${formatWithCommas(userBalance)}
+                    </h2>
+                  </div>
+                  {/* <h2 className="text-[14px] text-paraDarkText">$23,123</h2> */}
+                </div>
               <div className="currency_container p-3">
                 <div className=" flex justify-between mb-4">
                   <p className="text-paraDarkText text-sm">Currency</p>
@@ -239,7 +365,7 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
                       type="tel"
                       id="success"
                       className="bg-transparent  outline-none rounded-r-lg  block text-[34px] text-right max-w-[250px]"
-                      placeholder={userBalance}
+                      placeholder={formatWithCommas(userBalance)}
                       name="depositAmount"
                       value={depositAmount}
                       onChange={(e: any) => setDepositAmount(e.target.value)}
@@ -248,20 +374,19 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
                   {/* <h1 className="text-[34px]">23,123</h1> */}
                 </div>
 
-                <div className="balance flex justify-between">
-                  <div className="flex items-center gap-1 ">
-                    <Image
-                      src={Wallet}
-                      width={17}
-                      height={17}
-                      alt="right"
-                      className=""
-                    />
-                    <h2 className="text-[14px] text-paraDarkText">
-                      ${userBalance}
-                    </h2>
-                  </div>
-                  {/* <h2 className="text-[14px] text-paraDarkText">$23,123</h2> */}
+                <div className="border-t border-border_pri pt-4">
+                <div className=" flex items-center justify-between">
+                  <p className="text-white text-sm">Estimated Bonds ~(10.34)</p>
+                  <p className="text-white text-lg">{floatFigure(calEstimatedBonds(), 3)}</p>
+                </div>
+                <div className=" flex items-center justify-between">
+                  <p className="text-white text-sm">Estimated redemption</p>
+                  <p className="text-white text-lg">{floatFigure((calEstimatedBonds() * 100), 3)}</p>
+                </div>
+                <div className=" flex items-center justify-between mb-4">
+                  <p className="text-white text-sm">Redeemable on</p>
+                  <p className="text-white text-lg">{maturity == 0 ?<Loading/>  : formatBigIntTimestamp(maturity)}</p>
+                </div>
                 </div>
               </div>
               {
@@ -272,32 +397,50 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
               </div>
               }
               {
-                Number(quote) === 0 && (
+               depositEnabled && Number(quote) === 0 && (
                   <button
-                  className={`mt-7 py-3 w-full flex ${notEnoughBal ? "button1 text-paraDarkText": "proceed"}`}
-                  onClick={() => {
-                    getQuote()
-                  }}
-                  disabled={notEnoughBal}
+                  className={`mt-7 py-3 w-full flex button1 ${notEnoughBal ? " text-paraDarkText": "proceed"}`}
+                  // onClick={() => {
+                  //   getQuote()
+                  // }}
+                  disabled={true}
                 >
-                  {isGettingFee ? <div className="mx-auto">
-                    <Loading/>
-                  </div>  : <p className="mx-auto">Request Quote</p> }
+                  <div className="mx-auto">
+                  {quoteActivationLoading && (
+                    <div className="flex items-center gap-2">
+                      <Loading/>
+                      <p className="text-sm">{quoteProcessAlert ? quoteProcessAlert : "Checking Quote..."}</p>
+                    </div>
+                  )}
+                  </div> 
                 </button>
                 )
               }
               {
-                Number(quote) > 0 && (
+                Number(quote) > 0 && !isProductExpired && depositEnabled && (
                   <button
-                  className={`mt-7 py-3 w-full flex ${notEnoughBal ? "button1 text-paraDarkText": "proceed"}`}
+                  className={`mt-7 py-3 w-full flex ${notEnoughBal || minAmountAlert || Number(depositAmount) == 0 ? "button1 text-paraDarkText": "proceed"}`}
                   onClick={() => {
                     !isGettingFee &&  getFee();
                   }}
-                  disabled={notEnoughBal || Number(quote) <= 0}
+                  disabled={notEnoughBal || Number(quote) <= 0 || minAmountAlert || Number(depositAmount) == 0}
                 >
                   {isGettingFee ? <div className="mx-auto">
                     <Loading/>
                   </div>  : <p className="mx-auto">Proceed</p> }
+                </button>
+                )
+              }
+              {
+                !depositEnabled && (
+                  <button
+                  className="mt-7 py-3 w-full flex button1 text-paraDarkText"
+                  // onClick={() => {
+                  //   !isGettingFee &&  getFee();
+                  // }}
+                  disabled={!depositEnabled}
+                >
+                  <p className="mx-auto">Product Has Expired</p>
                 </button>
                 )
               }
@@ -337,7 +480,7 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
                 </div>
                 <div className=" flex justify-between mb-4 items-center">
                   <h1 className="text-paraDarkText">Quantity</h1>
-                  <h1 className="text-1xl">{depositAmount} USDT</h1>
+                  <h1 className="text-1xl">{depositAmount} USDC</h1>
                 </div>
                 <div className="mt-5">
                   <p className="text-[12px] mb-2 text-paraDarkText">Write memo for your transaction (optional)</p>
@@ -407,7 +550,7 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
                 </div>
                 <div className=" flex justify-between mb-4 items-center">
                   <h1 className="text-paraDarkText">Deposited</h1>
-                  <h1 className="text-1xl">{depositAmount} USDT</h1>
+                  <h1 className="text-1xl">{depositAmount} USDC</h1>
                 </div>
                 <div className=" flex justify-between mb-4 items-center">
                   <h1 className="text-paraDarkText">Memo</h1>
