@@ -29,6 +29,7 @@ import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import {GetAPY} from "./dataService/dataServices";
 import { pool } from "./constants/poolOptions";
 import UseStore from "@/store/UseStore";
+import Loading from "./components/UI-assets/loading";
  const getAnimationVariants = (delay: Number) => {
   const variants: any = {
     in: {
@@ -123,10 +124,11 @@ export default function Home() {
   //   },
   // ];
   const [pools, setPools] = useState(pool);
-
+  const [loadingApy, setLoadingApy] = useState(true)
   useEffect(() => {
     const interval = setInterval( async () => {
       const {data} = await GetAPY("https://bondexecution.onrender.com/monitoring/getYields")
+      if(data) setLoadingApy(false)
       setPools((prevPools) =>
         prevPools.map((pool, index) => ({ ...pool, apy: data.data[index].averageYieldPostExecution?.upper }))
       );
@@ -228,7 +230,7 @@ export default function Home() {
                             exit={{ opacity: 0, y: 10 }}
                             transition={{ duration: 0.3 }}
                           >
-                            {pool.apy}
+                            {loadingApy ? <div className="w-[60px] skeleton py-4 animate-puls shadow-md"></div> : pool.apy}
                           </motion.h1>
                           </AnimatePresence>
 

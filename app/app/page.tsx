@@ -33,6 +33,7 @@ import Link from "next/link";
 import { formatFigures } from "../components/web3FiguresHelpers";
 import { GetAPY } from "../dataService/dataServices";
 import Loading from "../components/UI-assets/loading";
+import { Tooltip } from "react-tooltip";
 const MainDapp = () => {
   const {setConnectorWalletAddress, connectorWalletAddress, poolReserve, setPoolReserve,transactionsStatus,setSelectedPool, selectedPool, } = UseStore()
   const [openState, setOpenState] = useState(false)
@@ -42,7 +43,7 @@ const MainDapp = () => {
   // const [pools, setPools] = useState<any>(pool ? pool : [])
   const [pools, setPools] = useState(pool);
   const [sortOrder, setSortOrder] = useState('asc'); 
-
+  const [loadingApy, setLoadingApy] = useState(true)
   const getReserveContractCal = async (
     id: string,
     txBuilder: TransactionBuilder,
@@ -121,6 +122,7 @@ const MainDapp = () => {
   useEffect(() => {
     const interval = setInterval( async () => {
       const {data} = await GetAPY("https://bondexecution.onrender.com/monitoring/getYields")
+      if(data) setLoadingApy(false)
       setPools((prevPools) =>
         prevPools.map((pool, index) => ({ ...pool, apy: data.data[index].averageYieldPostExecution?.upper }))
       );
@@ -137,12 +139,14 @@ const MainDapp = () => {
         const updatedPools = await Promise.all(pools.map(async (pool: any, index: number) => {
           const reserves = await getPoolReserve(index)
           const shareBalance = await getShareBalance(index)
-
+          const maturityDate = await readContract("maturity", index)
+          const now = BigInt(Math.floor(Date.now() / 1000))
           return {
             ...pool,
             reserves,
             shareBalance,
-            position: Number(shareBalance) * 100
+            position: Number(shareBalance) * 100,
+            depositEnabled: BigInt(maturityDate) > now
           }
         }))
         setPools(updatedPools)
@@ -150,6 +154,42 @@ const MainDapp = () => {
     }
     updatedPool()
   }, [connectorWalletAddress, transactionsStatus])
+  console.log({pools})
+
+      //  READ FUNCTION
+      const readContIntr = async (
+        id: string,
+        txBuilder: TransactionBuilder,
+        connection: any,
+        destinationPubKey: string | null = null,
+        functName: string
+      ) => {
+        const contract = new Contract(id);
+        if (!destinationPubKey) {
+          return false;
+        }
+        const tx = txBuilder
+          .addOperation(
+            contract.call(functName)
+          )
+          .setTimeout(30)
+          .build();
+    
+        const result = await simulateTx<string>(tx, connection);
+        return result;
+      };
+      const readContract = async (functName: string, index: number) => {
+        const txBuilderBalance = await getTxBuilder(
+          connectorWalletAddress!,
+          BASE_FEE,
+          provider,
+          selectedNetwork.networkPassphrase
+        );
+    
+        const result: any = await readContIntr(pool[index].contractAddress, txBuilderBalance, provider, connectorWalletAddress, functName);
+        const now = BigInt(Math.floor(Date.now() / 1000))
+        return result
+      }
 
   const sortFunc = (type: string) => {
     if(type === "apy"){
@@ -408,7 +448,7 @@ const MainDapp = () => {
 
                   </div>
                   <div className="APY text-blueish  w-3/12">
-                    <h1 className="text-[16px] mb-1 ">{pool.apy}</h1>
+                    <h1 className="text-[16px] mb-1 ">                      {loadingApy ? <div className="w-[60px] skeleton py-3 animate-puls shadow-md"></div> : pool.apy}</h1>
                     <div className="time_tag flex items-center gap-1 py-[3px] px-[5px] w-[150px]">
                       {" "}
                       <Image
@@ -457,12 +497,16 @@ const MainDapp = () => {
                       }
                     </button>
                     <button
-                      className={` button2 inline-flex items-center px-[60px] py-[7px] gap-1 mx-auto ${!connectorWalletAddress && "hover:bg-transparent button1"}`}
+                      className={` inline-flex items-center px-[60px] py-[7px] gap-1 mx-auto ${!connectorWalletAddress || !pool.
+                        depositEnabled ? "hover:bg-transparent button1": "button2" }`}
                       onClick={() => {
                         setOpenState(true)
                         setSelectedPool(pool)
                       }}
-                      disabled={!connectorWalletAddress}
+                      disabled={!connectorWalletAddress || !pool.
+                        depositEnabled}
+                        id={!pool.
+                        depositEnabled? "depositDisabled" : ''}
                       // onClick={() => fetchBalance()}
                     >
                       <p className="text-sm">Invest</p>
@@ -479,7 +523,7 @@ const MainDapp = () => {
             </div>
             {/*Mobile Pool Strategies */}
             <div className="table_pool_container_mobile flex-col gap-4 hidden max-lg:flex">
-              {pool.map((pool, index) => (
+              {pool.map((pool: any, index) => (
                 <div
                   className="table_pool_container p-5 text-secText"
                   key={`${index}--pool`}
@@ -504,7 +548,9 @@ const MainDapp = () => {
                       </div>
                     </div>
                     <div className="APY text-blueish  ">
-                      <h1 className="text-[16px] mb-1 ">{pool.apy}</h1>
+                      <h1 className="text-[16px] mb-1 ">
+                      {loadingApy ? <div className="w-[60px] skeleton py-3 animate-puls shadow-md"></div> : pool.apy}
+                        </h1>
                       <div className="time_tag flex items-center gap-1 py-[3px] px-[5px] w-[150px]">
                         {" "}
                         <Image
@@ -576,12 +622,16 @@ const MainDapp = () => {
 
                   </button>
                   <button
-                    className={`w-full button2 mt-3 flex items-center justify-center px-9 py-3 gap-1`}
+                    className={`w-full mt-3 flex items-center justify-center px-9 py-3 gap-1 ${!connectorWalletAddress || !pool.
+                        depositEnabled ? "hover:bg-transparent button1": "button2" }`}
                     onClick={() => {
                       setOpenState(true)
                       setSelectedPool(pool)
                     }}
-                    disabled={!connectorWalletAddress}
+                    disabled={!connectorWalletAddress || !pool.
+                      depositEnabled}
+                      id={!pool.
+                      depositEnabled? "depositDisabled" : ''}
                   >
                     <p className="text-sm">Invest Now</p>
                     <ChevronRightIcon className="w-[13px] h-[13px] h-[20px] pt-1"/>
@@ -629,6 +679,9 @@ const MainDapp = () => {
     {
       openWithdrawState && <WithdrawFunds setOpenState={setOpenWithdrawState}/>
     }
+                <div className="text-[13px] ">
+                <Tooltip anchorSelect="#depositDisabled" content="Pool Has Expired." className="max-w-[200px] text-center text-[10px]" />
+                </div>
     </>
   );
 };

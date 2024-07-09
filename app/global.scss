@@ -415,3 +415,27 @@ box-shadow: 0px -12px 24px 0px rgba(158, 113, 255, 0.20) inset;
   flex: 1;
   height: 100%;
 }
+
+
+.skeleton {
+	background-color: #2b1d3a;
+	// The shine that's going to move across the skeleton:
+	background-image:			
+			linear-gradient(
+				90deg, 
+				rgba(#e4d3d3, 0), 
+				rgba(#e4d3d3, 0.5),
+				rgba(#e4d3d3, 0)
+			);
+	background-size: 40px 100%; // width of the shine
+	background-repeat: no-repeat; // No need to repeat the shine effect
+	background-position: left -40px top 0; // Place shine on the left side, with offset on the left based on the width of the shine - see background-size
+	animation: shine 2s ease infinite; // increase animation time to see effect in 'slow-mo'
+}
+
+@keyframes shine {
+	to {
+		// Move shine from left to right, with offset on the right based on the width of the shine - see background-size
+		background-position: right -40px top 0;
+	}
+}
