@@ -29,7 +29,6 @@ import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import {GetAPY} from "./dataService/dataServices";
 import { pool } from "./constants/poolOptions";
 import UseStore from "@/store/UseStore";
-import Loading from "./components/UI-assets/loading";
  const getAnimationVariants = (delay: Number) => {
   const variants: any = {
     in: {
@@ -87,19 +86,17 @@ export default function Home() {
   };
 
   const [pools, setPools] = useState(pool);
-  const [loadingApy, setLoadingApy] = useState(true)
   console.log({pools, selectedNetwork})
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
         const { data } = await GetAPY("https://bondexecution.onrender.com/monitoring/getYields");
-        if (data) setLoadingApy(false);
         
         setPools((prevPools: any) => ({
               ...prevPools,
               [selectedNetwork.network]: prevPools[selectedNetwork.network].map((pool: any, index: any) => ({
                 ...pool,
-                apy: data.data[index]?.averageYieldPostExecution?.upper,
+                apy: data?.data[index]?.averageYieldPostExecution?.upper,
               })),
         }));
       } catch (error) {
@@ -151,7 +148,7 @@ export default function Home() {
               initial="out"
               animate={hreoIsInView ? "in" : "out"}
             >
-              Harness the power of futures spread trading with Bondhive&#39;s Crypto Bonds which offer a straightforward way to invest with fixed terms and guaranteed yields, similar to traditional bank deposit
+              Harness the power of futures spread trading with Bondhive&#39;s Crypto Bonds which offer a straightforward way to invest with fixed terms and guaranteed yields, similar to traditional bank deposits
             </motion.p>
           </div>
           {/* <div className="preview mx-auto  bg-black">
@@ -202,7 +199,7 @@ export default function Home() {
                             exit={{ opacity: 0, y: 10 }}
                             transition={{ duration: 0.3 }}
                           >
-                            {loadingApy ? <div className="w-[60px] skeleton py-4 animate-puls shadow-md"></div> : pool.apy}
+                              {pool.apy}
                           </motion.h1>
                           </AnimatePresence>
 
@@ -250,7 +247,7 @@ export default function Home() {
                           <p className=" text-blueish">
                             ${pool.minimum}
                             <span className="text-[13px] text-paraDarkText ml-2">
-                              -{pool.minimum} USDC
+                              - {pool.minimum} USDC
                             </span>
                           </p>
                         </div>
@@ -337,8 +334,8 @@ export default function Home() {
               className="subtitle_p md:w-4/12 text-center px-6 md:px-0"
             >
               In markets where the price of futures contracts is higher than the
-              current market price, known as contango, investors have the
-              opportunity to profit from this disparity.
+              current market price, known as <i>“contango”</i>, investors have the
+              opportunity to profit from this disparity
             </motion.p>
           </div>
           
@@ -475,7 +472,7 @@ export default function Home() {
               <p className="subtitle_p md:w-[455px]">
                 One could tap into the opportunity and enter positions that
                 yield consistently, even through bear markets, and find
-                significantly enhanced prospects during bull markets.
+                significantly enhanced prospects during bull markets
               </p>
             </motion.div>
             <div className="relative w-full md:max-lg:px-1" ref={historyYield2}>
@@ -659,7 +656,7 @@ export default function Home() {
                 For a closer look, please visit our Dune Analytics dashboard.
                 Summarizing, ETH and BTC bonds have shown promising average
                 yields of 13.61% and 16.42% for ETH, and 13.75% and 15.69% for
-                BTC, over the past six months.
+                BTC, over the past six months
               </p>
               <Link
                 href={

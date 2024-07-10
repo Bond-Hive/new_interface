@@ -19,16 +19,10 @@ const Footer = () => {
             <p className="text-md font-semibold text-white">Bondhive</p>
           </div>
           <p className="w-[434px] text-sm">
-          BondHive leverages blockchain technology to bring traditional financial instruments, such as bonds, into the DeFi space, offering predictable, stable returns similar to fixed deposits but with the flexibility and efficiency of decentralized finance.
+            BondHive uses blockchain technology to bring traditional bonds into DeFi, offering stable, predictable returns like fixed deposits with the flexibility and efficiency of decentralized finance.
           </p>
         </div>
         <div className="">
-          <ul className="flex items-center gap-7 mb-5">
-          <li>How it works</li>
-            <li>Historical Yields</li>
-            <li>Features</li>
-            <li>FAQs</li>
-          </ul>
 
           <div className="socials flex gap-4">
             <Link href={"https://t.me/+AjBlPFAjjLYyNWNl"} target="_blank">
