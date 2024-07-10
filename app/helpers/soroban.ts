@@ -34,6 +34,7 @@ export const XLM_DECIMALS = 7;
 
 export const RPC_URLS: { [key: string]: string } = {
   TESTNET: "https://soroban-testnet.stellar.org/",
+  PUBLIC: "https://mainnet.stellar.validationcloud.io/v1/YcyPYotN_b6-_656rpr0CabDwlGgkT42NCzPVIqcZh0"
 };
 
 // Can be used whenever you need an Address argument for a contract method
@@ -109,7 +110,7 @@ export const simulateTx = async <ArgType>(
   server: SorobanRpc.Server,
 ): Promise<ArgType> => {
   const response = await server.simulateTransaction(tx);
-
+  console.log({response})
   if (
     SorobanRpc.Api.isSimulationSuccess(response) &&
     response.result !== undefined

@@ -24,13 +24,9 @@ import {
   isAllowed,
   setAllowed,
   requestAccess,
+  getNetwork,
+  getNetworkDetails,
 } from "@stellar/freighter-api";
-// import {
-//   StellarWalletsKit,
-//   WalletNetwork,
-//   WalletType,
-//   ISupportedWallet,
-// } from "stellar-wallets-kit";
 import {
   FreighterModule,
   ISupportedWallet,
@@ -50,14 +46,12 @@ import {
   getTxBuilder,
   simulateTx,
 } from "@/app/helpers/soroban";
-import { provider } from "../web3Function/soroban";
-import { TESTNET_DETAILS } from "@/app/helpers/network";
 import Loading from "../UI-assets/loading";
 import { pool } from "@/app/constants/poolOptions";
 import { formatFigures } from "../web3FiguresHelpers";
 
 export const kit: StellarWalletsKit = new StellarWalletsKit({
-  network: WalletNetwork.TESTNET,
+  network: WalletNetwork.PUBLIC,
   selectedWalletId: FREIGHTER_ID,
   modules: allowAllModules(),
 });
@@ -72,14 +66,17 @@ const DAppHeader = () => {
     connectorWalletAddress,
     userBalance,
     setUserBalance,
+    selectedNetwork,
     setSelectedNetwork,
-    transactionsStatus
+    transactionsStatus,
+    walletNetwork,
+    setWalletNetwork
   } = UseStore();
   const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
   const [connectionError, setConnectionError] = React.useState(
     null as string | null
   );
-  const [selectedNetwork] = React.useState(TESTNET_DETAILS);
+
   const connectWallet = async () => {
     const isAllowed = await setAllowed();
     if (isAllowed) {
@@ -116,7 +113,7 @@ const DAppHeader = () => {
             kit.setWallet(option.id);
             const publicKey = await kit.getPublicKey();
 
-            await kit.setNetwork(WalletNetwork.TESTNET);
+            await kit.setNetwork(WalletNetwork.PUBLIC);
             setConnectorWalletAddress(publicKey);
           } catch (error) {
             console.log(error);
@@ -152,7 +149,7 @@ const DAppHeader = () => {
       .build();
 
     const result = await simulateTx<string>(tx, connection);
-    return ethers.formatUnits(result, pool[0].tokenDecimals);
+    return ethers.formatUnits(result, 7);
   };
 
   const [isLoading, setIsLoading] = useState<Boolean | null>(null);
@@ -161,13 +158,13 @@ const DAppHeader = () => {
     const txBuilderBalance = await getTxBuilder(
       connectorWalletAddress!,
       BASE_FEE,
-      provider,
+      server,
       selectedNetwork.networkPassphrase
     );
     try {
-      const tokenBalanceUser: any = await getTokenBalance(pool[0].tokenAddress,
+      const tokenBalanceUser: any = await getTokenBalance(pool[selectedNetwork?.network][0].tokenAddress,
         txBuilderBalance,
-        provider,
+        server,
         connectorWalletAddress
       );
       setUserBalance(parseFloat(tokenBalanceUser).toFixed(2).toString());
@@ -178,10 +175,8 @@ const DAppHeader = () => {
       console.error(error);
     }
   };
-
   useEffect(() => {
-    if (connectorWalletAddress) {
-      setSelectedNetwork(selectedNetwork.networkPassphrase);
+    if (connectorWalletAddress && selectedNetwork) {
       getUserBalance();
     }
   }, [connectorWalletAddress,transactionsStatus]);
@@ -189,6 +184,46 @@ const DAppHeader = () => {
   useEffect(() => {
     retrievePublicKey()
   })
+  const inferredNetwork = async () => {
+    if (await isConnected() || connectorWalletAddress) {
+      const networkPassphrase = await getNetwork();
+      const networkDetails = await getNetworkDetails()
+      // console.log({walletNetworkDet: await getNetworkDetails()})
+      // console.log({ walletNetwork: networkPassphrase });
+      setSelectedNetwork(networkDetails)
+      setWalletNetwork(networkDetails.network === 'PUBLIC' ? 'Stellar Mainnet' : "Stellar Testnet");
+      return 
+    }
+    return null; 
+  };
+const [networkChange, setNetworkChange] = useState(false)
+  useEffect(() => {
+    inferredNetwork();
+    setNetworkChange(false)
+    console.log("Changing network", selectedNetwork.network, networkChange)
+  }, [connectorWalletAddress, transactionsStatus, isConnected, isAllowed, getNetwork, networkChange]);
+
+  useEffect(() => {
+    const getNetwork = async () => {
+      const networkDetails = await getNetworkDetails()
+      if(networkDetails){
+        setNetworkChange(true)
+      } else{
+        setNetworkChange(false)
+      }
+      if(selectedNetwork){
+        inferredNetwork();
+      }
+
+      console.log({networkDetails: networkDetails.network})
+    }
+    getNetwork()
+  }, [])
+
+  useEffect(() => {
+    inferredNetwork();
+  }, [networkChange]);
+  console.log({networkk: selectedNetwork.network})
   return (
     <div className="w-full relative">
       <div className="">
@@ -260,14 +295,14 @@ const DAppHeader = () => {
             className={` button1 inline-flex items-center md:px-[16px] px-[9px] md:py-[5px] py-[4px] gap-1`}
           >
             <Image src={StellarLogo} width={19} height={32} alt="bondhive" className="bg-white rounded-full"/>
-            <p className="max-sm:hidden">Stellar Testnet</p>
-            <Image
+            <p className="max-sm:hidden">{walletNetwork}</p>
+            {/* <Image
               src={ChervonUp}
               width={15}
               height={15}
               alt="bondhive"
               className="max-sm:hidden"
-            />
+            /> */}
           </button>
           <button
             className={`button2 flex items-center px-[16px] max-sm:px-2 py-[5px] max-sm:py-1 max-sm:text-[11px]  h-[40px]`}

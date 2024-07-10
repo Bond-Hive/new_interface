@@ -45,7 +45,7 @@ import Loading from "./components/UI-assets/loading";
   return variants;
 };
 export default function Home() {
-  const {setAllPools} = UseStore()
+  const {setAllPools,selectedNetwork} = UseStore()
   const cardHoverVariants = {
     in: {
       y: 0,
@@ -85,58 +85,30 @@ export default function Home() {
 
     return apyRandom[randomFigure];
   };
-  // const initialPools = [
-  //   {
-  //     name: "ethereum",
-  //     ticker: "ETH",
-  //     img: EthBgWhiteLogo,
-  //     apy: "10.92%",
-  //     depositAsset: "USDC",
-  //     minimum: 100,
-  //     maturity: "27, Sep 2024",
-  //   },
-  //   {
-  //     name: "bitcoin",
-  //     ticker: "BTC",
-  //     img: BTCBgLogo,
-  //     apy: "11.32%",
-  //     depositAsset: "USDC",
-  //     minimum: 100,
-  //     maturity: "27, Sep 2024",
-  //   },
-  //   {
-  //     name: "ethereum",
-  //     ticker: "ETH",
-  //     img: EthBgWhiteLogo,
-  //     apy: "11.82%",
-  //     depositAsset: "USDC",
-  //     minimum: 100,
-  //     maturity: "27, Dec 2024",
-  //   },
-  //   {
-  //     name: "bitcoin",
-  //     ticker: "BTC",
-  //     img: BTCBgLogo,
-  //     apy: "12.86%",
-  //     depositAsset: "USDC",
-  //     minimum: 100,
-  //     maturity: "27, Dec 2024",
-  //   },
-  // ];
+
   const [pools, setPools] = useState(pool);
   const [loadingApy, setLoadingApy] = useState(true)
+  console.log({pools, selectedNetwork})
   useEffect(() => {
-    const interval = setInterval( async () => {
-      const {data} = await GetAPY("https://bondexecution.onrender.com/monitoring/getYields")
-      if(data) setLoadingApy(false)
-      setPools((prevPools) =>
-        prevPools.map((pool, index) => ({ ...pool, apy: data.data[index].averageYieldPostExecution?.upper }))
-      );
+    const interval = setInterval(async () => {
+      try {
+        const { data } = await GetAPY("https://bondexecution.onrender.com/monitoring/getYields");
+        if (data) setLoadingApy(false);
+        
+        setPools((prevPools: any) => ({
+              ...prevPools,
+              [selectedNetwork.network]: prevPools[selectedNetwork.network].map((pool: any, index: any) => ({
+                ...pool,
+                apy: data.data[index]?.averageYieldPostExecution?.upper,
+              })),
+        }));
+      } catch (error) {
+        console.error("Error fetching APY data:", error);
+      }
     }, 10000);
-
-    // Clear interval on component unmount
+  
     return () => clearInterval(interval);
-  }, [])
+  }, [selectedNetwork.network]);
 
   return (
     <>
@@ -195,7 +167,7 @@ export default function Home() {
             >
               <div className="preview mx-auto relative md:w-10/12 w-11/12">
                 <div className="table_pool_container_mobile md:grid grid-cols-2 gap-10">
-                  {pools.map((pool, index) => (
+                  {pools[selectedNetwork.network]?.map((pool:any, index:any) => (
                     <div
                       className="table_pool_container p-5 text-secText bg-dappHeaderBg border-border_pri border rounded-md max-md:mb-5"
                       key={`${index}--pool`}

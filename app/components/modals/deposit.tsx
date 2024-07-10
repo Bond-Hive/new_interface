@@ -8,12 +8,12 @@ import {
   BASE_FEE,
   accountToScVal,
   getEstimatedFee,
+  getServer,
   getTxBuilder,
   mintTokens,
   simulateTx,
   submitTx,
 } from "@/app/helpers/soroban";
-import { provider } from "../web3Function/soroban";
 import { TESTNET_DETAILS, signTx } from "@/app/helpers/network";
 import { ethers } from "ethers";
 import { stroopToXlm, xlmToStroop } from "@/app/helpers/format";
@@ -33,15 +33,15 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
     userBalance,
     selectedNetwork: currentNetwork,
     setTransactionsStatus,
-    selectedPool
+    selectedPool,
+    selectedNetwork
   } = UseStore();
-
+  const provider = getServer(selectedNetwork);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [fee, setFee] = React.useState(BASE_FEE);
   const [step, setStep] = useState(0);
   const [isGettingFee, setIsGettingFee] = useState<Boolean | null>(null);
   const contractAddress = selectedPool.contractAddress;
-  const [selectedNetwork] = React.useState(TESTNET_DETAILS);
   const [connectionError, setConnectionError] = useState(null as string | null);
   const [openXDR, setOpenXDR] = useState(false)
   const [signedXdr, setSignedXdr] = React.useState("");

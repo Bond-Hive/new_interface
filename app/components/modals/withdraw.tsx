@@ -7,13 +7,13 @@ import UseStore from "@/store/UseStore";
 import {
   BASE_FEE,
   getEstimatedFee,
+  getServer,
   getTxBuilder,
   mintTokens,
   simulateTx,
   submitTx,
   withdrawTokens,
 } from "@/app/helpers/soroban";
-import { provider } from "../web3Function/soroban";
 import { TESTNET_DETAILS, signTx } from "@/app/helpers/network";
 import { ethers } from "ethers";
 import { stroopToXlm, xlmToStroop } from "@/app/helpers/format";
@@ -35,14 +35,14 @@ const WithdrawFunds: React.FC<{ setOpenState: any}> = ({
     selectedNetwork: currentNetwork,
     setTransactionsStatus,
     selectedPool,
+    selectedNetwork
   } = UseStore();
-
+  const provider = getServer(selectedNetwork);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [fee, setFee] = React.useState(BASE_FEE);
   const [step, setStep] = useState(0);
   const [isGettingFee, setIsGettingFee] = useState<Boolean | null>(null);
   const contractAddress = selectedPool.contractAddress;
-  const [selectedNetwork] = React.useState(TESTNET_DETAILS);
   const [connectionError, setConnectionError] = useState(null as string | null);
   const [openXDR, setOpenXDR] = useState(false);
   const [signedXdr, setSignedXdr] = React.useState("");

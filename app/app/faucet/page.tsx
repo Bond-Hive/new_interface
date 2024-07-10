@@ -24,10 +24,9 @@ import {
   UsdcBgLogo,
 } from "@/app/components/assets";
 import Link from "next/link";
-import { BASE_FEE, getTxBuilder, mintTestTokens, submitTx } from "@/app/helpers/soroban";
+import { BASE_FEE, getServer, getTxBuilder, mintTestTokens, submitTx } from "@/app/helpers/soroban";
 import { TESTNET_DETAILS, signTx } from "@/app/helpers/network";
 import { xlmToStroop } from "@/app/helpers/format";
-import { provider } from "@/app/components/web3Function/soroban";
 import { ERRORS } from "@/app/helpers/error";
 import { pool } from "@/app/constants/poolOptions";
 import Loading from "@/app/components/UI-assets/loading";
@@ -55,6 +54,8 @@ const Faucet = () => {
   const [signedXdr, setSignedXdr] = React.useState("");
   const [txResultXDR, setTxResultXDR] = useState<String | null>(null);
   const [notEnoughBal, setNotEnoughBal] = useState(false);
+
+  const provider = getServer(selectedNetwork);
   const signWithFreighter = async () => {
     setIsSubmitting(true);
 

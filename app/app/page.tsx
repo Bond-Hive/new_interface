@@ -19,7 +19,6 @@ import { ChevronRightIcon, RectangleGroupIcon } from "@heroicons/react/24/outlin
 import DappFooter from "../components/navigations/dAppFooter";
 import DepositFunds from "../components/modals/deposit";
 import React, { memo, useEffect, useState } from "react";
-import { fetchBalance, provider } from "../components/web3Function/soroban";
 import { BASE_FEE, accountToScVal, getEstimatedFee, getServer, getTxBuilder, mintTokens, simulateTx, submitTx } from "../helpers/soroban";
 import { TESTNET_DETAILS, signTx } from "../helpers/network";
 import { Contract, TransactionBuilder } from "@stellar/stellar-sdk";
@@ -35,15 +34,17 @@ import { GetAPY } from "../dataService/dataServices";
 import Loading from "../components/UI-assets/loading";
 import { Tooltip } from "react-tooltip";
 const MainDapp = () => {
-  const {setConnectorWalletAddress, connectorWalletAddress, poolReserve, setPoolReserve,transactionsStatus,setSelectedPool, selectedPool, } = UseStore()
+  const {setConnectorWalletAddress, connectorWalletAddress, poolReserve, setPoolReserve,transactionsStatus,setSelectedPool, selectedPool,selectedNetwork} = UseStore()
   const [openState, setOpenState] = useState(false)
   const [openWithdrawState, setOpenWithdrawState] = useState(false)
   const [shareBalance, setShareBalance] = useState<any>(null)
-  const [selectedNetwork] = React.useState(TESTNET_DETAILS);
+  // const [selectedNetwork] = React.useState(TESTNET_DETAILS);
   // const [pools, setPools] = useState<any>(pool ? pool : [])
   const [pools, setPools] = useState(pool);
   const [sortOrder, setSortOrder] = useState('asc'); 
   const [loadingApy, setLoadingApy] = useState(true)
+
+  const provider = getServer(selectedNetwork);
   const getReserveContractCal = async (
     id: string,
     txBuilder: TransactionBuilder,
@@ -62,7 +63,8 @@ const MainDapp = () => {
       .build();
 
     const result = await simulateTx<string>(tx, connection);
-    return ethers.formatUnits(result, pool[0].tokenDecimals);
+    // return ethers.formatUnits(result, pool[[0].tokenDecimals);
+    return ethers.formatUnits(result, 7);
   }; 
 
 
@@ -74,7 +76,7 @@ const MainDapp = () => {
       selectedNetwork.networkPassphrase
     );
 
-    const poolReserve: any = await getReserveContractCal(pool[poolIndex].contractAddress, txBuilderBalance, provider, connectorWalletAddress);
+    const poolReserve: any = await getReserveContractCal(pool[selectedNetwork?.network][poolIndex].contractAddress, txBuilderBalance, provider, connectorWalletAddress);
     setPoolReserve({[poolIndex]: parseFloat(poolReserve).toFixed(2).toString()})
     return poolReserve
   }
@@ -114,32 +116,41 @@ const MainDapp = () => {
       selectedNetwork.networkPassphrase
     );
 
-    const shareBalance: any = await getShareCont(pool[poolIndex].shareId, txBuilderBalance, provider, connectorWalletAddress);
+    const shareBalance: any = await getShareCont(pool[selectedNetwork.network][poolIndex].shareId, txBuilderBalance, provider, connectorWalletAddress);
     setShareBalance({[poolIndex]:shareBalance})
     return shareBalance
   }
 
   useEffect(() => {
-    const interval = setInterval( async () => {
-      const {data} = await GetAPY("https://bondexecution.onrender.com/monitoring/getYields")
-      if(data) setLoadingApy(false)
-      setPools((prevPools) =>
-        prevPools.map((pool, index) => ({ ...pool, apy: data.data[index].averageYieldPostExecution?.upper }))
-      );
+    const interval = setInterval(async () => {
+      try {
+        const { data } = await GetAPY("https://bondexecution.onrender.com/monitoring/getYields");
+        if (data) setLoadingApy(false);
+        
+        setPools((prevPools: any) => ({
+              ...prevPools,
+              [selectedNetwork.network]: prevPools[selectedNetwork.network].map((pool: any, index: any) => ({
+                ...pool,
+                apy: data.data[index]?.averageYieldPostExecution?.upper,
+              })),
+        }));
+      } catch (error) {
+        console.error("Error fetching APY data:", error);
+      }
     }, 10000);
-
-    // Clear interval on component unmount
+  
     return () => clearInterval(interval);
-  }, [])
-
+  }, [selectedNetwork.network]);
+console.log({selectedNetwork})
   useEffect(() => {
 
     const updatedPool = async () => {
       if(connectorWalletAddress && pool){
-        const updatedPools = await Promise.all(pools.map(async (pool: any, index: number) => {
+        const updatedPools = await Promise.all(pools[selectedNetwork?.network].map(async (pool: any, index: number) => {
           const reserves = await getPoolReserve(index)
           const shareBalance = await getShareBalance(index)
           const maturityDate = await readContract("maturity", index)
+          console.log({maturityDate})
           const now = BigInt(Math.floor(Date.now() / 1000))
           return {
             ...pool,
@@ -149,12 +160,11 @@ const MainDapp = () => {
             depositEnabled: BigInt(maturityDate) > now
           }
         }))
-        setPools(updatedPools)
+        setPools({[selectedNetwork?.network]: updatedPools})
       }
     }
     updatedPool()
   }, [connectorWalletAddress, transactionsStatus])
-  console.log({pools})
 
       //  READ FUNCTION
       const readContIntr = async (
@@ -186,15 +196,15 @@ const MainDapp = () => {
           selectedNetwork.networkPassphrase
         );
     
-        const result: any = await readContIntr(pool[index].contractAddress, txBuilderBalance, provider, connectorWalletAddress, functName);
+        const result: any = await readContIntr(pool[selectedNetwork.network][index].contractAddress, txBuilderBalance, provider, connectorWalletAddress, functName);
         const now = BigInt(Math.floor(Date.now() / 1000))
         return result
       }
 
   const sortFunc = (type: string) => {
     if(type === "apy"){
-      setPools(prevPools => {
-        const sortedPools = [...prevPools].sort((a, b) => {
+      setPools((prevPools: any) => {
+        const sortedPools = [...prevPools[selectedNetwork.network]].sort((a, b) => {
           if (sortOrder === 'asc') {
             return parseFloat(a.apy) - parseFloat(b.apy);
           } else {
@@ -202,12 +212,12 @@ const MainDapp = () => {
           }
         });
         console.log({sortedPools})
-        return sortedPools;
+        return  {[selectedNetwork.network]:sortedPools};
       });
       setSortOrder(prevOrder => (prevOrder === 'asc' ? 'desc' : 'asc'));
     } else{
-      setPools(prevPools => {
-        const sortedPools = [...prevPools].sort((a, b) => {
+      setPools((prevPools: any) => {
+        const sortedPools = [...prevPools[selectedNetwork.network]].sort((a, b) => {
           if (sortOrder === 'asc') {
             return parseFloat(a.reserves) - parseFloat(b.reserves);
           } else {
@@ -215,7 +225,7 @@ const MainDapp = () => {
           }
         });
         console.log({sortedPools})
-        return sortedPools;
+        return {[selectedNetwork.network]:sortedPools};
       });
       setSortOrder(prevOrder => (prevOrder === 'asc' ? 'desc' : 'asc'));
     }
@@ -370,14 +380,6 @@ const MainDapp = () => {
                 {pool.length} available{" "}
               </p>
             </div>
-            {/* <div className="arrange flex gap-2 items-center max-md:hidden">
-              <div className="arrange_icon active text-white flex items-center justify-center cursor-pointer">
-                <RectangleGroupIcon className="w-[19px] h-[19px]" />
-              </div>
-              <div className="arrange_icon text-secText flex items-center justify-center cursor-pointer">
-                <RectangleGroupIcon className="w-[19px] h-[19px]" />
-              </div>
-            </div> */}
           </div>
           <div className="table w-full mt-5">
             <div className="table_heading text-blueish p-4 flex justify-between items-center mb-5">
@@ -419,7 +421,7 @@ const MainDapp = () => {
               </div>
             </div>
             <div className="table_pool_container max-lg:hidden">
-              {pools.map((pool: any, index: number) => (
+              {pools[selectedNetwork?.network].map((pool: any, index: number) => (
                 <div
                   className={`table_pool flex items-start px-4 border-border_pri pb-3 pt-6 ${
                     index !== 0 && "border-t"
@@ -439,9 +441,6 @@ const MainDapp = () => {
                         <h1 className="text-white text-[16px]">
                           {pool.name}
                         </h1>
-                        {/* <p className="text-darkPrimText text-sm capitalize">
-                          {pool.name} Futures and Spot
-                        </p> */}
                         <p className="text-darkPrimText text-sm mt-2">Minimum <span className="text-blueish">${pool.minimum}</span></p>
                       </div>
                     </div>
@@ -506,8 +505,7 @@ const MainDapp = () => {
                       disabled={!connectorWalletAddress || !pool.
                         depositEnabled}
                         id={!pool.
-                        depositEnabled? "depositDisabled" : ''}
-                      // onClick={() => fetchBalance()}
+                        depositEnabled ? "depositDisabled" : ''}
                     >
                       <p className="text-sm">Invest</p>
                       <Image
@@ -523,7 +521,7 @@ const MainDapp = () => {
             </div>
             {/*Mobile Pool Strategies */}
             <div className="table_pool_container_mobile flex-col gap-4 hidden max-lg:flex">
-              {pool.map((pool: any, index) => (
+              {pool[selectedNetwork?.network].map((pool: any, index:number) => (
                 <div
                   className="table_pool_container p-5 text-secText"
                   key={`${index}--pool`}
@@ -542,9 +540,6 @@ const MainDapp = () => {
                           {" "}
                           {pool.name}
                         </h1>
-                        {/* <p className="text-darkPrimText text-[10px] capitalize">
-                          {pool.name} Futures and Spot
-                        </p> */}
                       </div>
                     </div>
                     <div className="APY text-blueish  ">
@@ -596,9 +591,6 @@ const MainDapp = () => {
                       <p className="">Minimum Inv.</p>
                       <p className=" text-blueish">
                         $100
-                        {/* <span className="text-[13px] text-paraDarkText ml-2">
-                          -{pool.minimum} USDC
-                        </span> */}
                       </p>
                     </div>
                   </div>
@@ -618,7 +610,6 @@ const MainDapp = () => {
                         <ChevronRightIcon className="w-[13px] h-[20px] "/>
                           </div>
                       }
-                    {/* <p className="text-sm">My Position</p> */}
 
                   </button>
                   <button
