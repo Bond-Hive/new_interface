@@ -86,22 +86,23 @@ const DAppHeader = () => {
   };
 
   const retrievePublicKey = async () => {
-    if (!(await isAllowed())) {
-      await connectWallet();
-    }
+    // if (!(await isAllowed())) {
+    //   await connectWallet();
+    // }
     const checkIsConnected = await isConnected();
     const previouslyAuthorized = await isAllowed();
 
     try {
       if (checkIsConnected && previouslyAuthorized && !connectorWalletAddress) {
         let publicKey = await requestAccess();
+        console.log({connectorWalletAddress: publicKey})
         setConnectorWalletAddress(publicKey);
       }
     } catch (e) {
       console.log({ e });
     }
   };
-
+  // console.log({connectorWalletAddress})
   // Wallet Connection
   const onClick = async () => {
     setConnectionError(null);
@@ -115,6 +116,7 @@ const DAppHeader = () => {
 
             await kit.setNetwork(WalletNetwork.PUBLIC);
             setConnectorWalletAddress(publicKey);
+                        await retrievePublicKey();
           } catch (error) {
             console.log(error);
             setConnectionError(ERRORS.WALLET_CONNECTION_REJECTED);
@@ -183,7 +185,7 @@ const DAppHeader = () => {
 
   useEffect(() => {
     retrievePublicKey()
-  })
+  }, [connectorWalletAddress])
   const inferredNetwork = async () => {
     if (await isConnected() || connectorWalletAddress) {
       const networkPassphrase = await getNetwork();

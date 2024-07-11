@@ -129,9 +129,9 @@ const MainDapp = () => {
         
         setPools((prevPools: any) => ({
               ...prevPools,
-              [selectedNetwork.network]: prevPools[selectedNetwork.network].map((pool: any, index: any) => ({
+              [selectedNetwork.network]: prevPools[selectedNetwork.network]?.map((pool: any, index: any) => ({
                 ...pool,
-                apy: data.data[index]?.averageYieldPostExecution?.upper,
+                apy: data?.data[index]?.averageYieldPostExecution?.upper,
               })),
         }));
       } catch (error) {
@@ -164,7 +164,7 @@ console.log({selectedNetwork})
       }
     }
     updatedPool()
-  }, [connectorWalletAddress, transactionsStatus])
+  }, [connectorWalletAddress,  transactionsStatus?.deposit, transactionsStatus, selectedNetwork])
 
       //  READ FUNCTION
       const readContIntr = async (
@@ -421,7 +421,7 @@ console.log({selectedNetwork})
               </div>
             </div>
             <div className="table_pool_container max-lg:hidden">
-              {pools[selectedNetwork?.network].map((pool: any, index: number) => (
+              {pools[selectedNetwork?.network]?.map((pool: any, index: number) => (
                 <div
                   className={`table_pool flex items-start px-4 border-border_pri pb-3 pt-6 ${
                     index !== 0 && "border-t"
@@ -670,9 +670,12 @@ console.log({selectedNetwork})
     {
       openWithdrawState && <WithdrawFunds setOpenState={setOpenWithdrawState}/>
     }
-                <div className="text-[13px] ">
-                <Tooltip anchorSelect="#depositDisabled" content="Pool Has Expired." className="max-w-[200px] text-center text-[10px]" />
-                </div>
+    {/* {
+      !pool.
+      depositEnabled &&                 <div className="text-[13px] ">
+      <Tooltip anchorSelect="#depositDisabled" content="Pool Has Expired." className="max-w-[200px] text-center text-[10px]" />
+      </div>
+    } */}
     </>
   );
 };

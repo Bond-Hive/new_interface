@@ -311,7 +311,7 @@ const WithdrawFunds: React.FC<{ setOpenState: any}> = ({
               </button>
             </div>
           )}
-          {step === 2 && txResultXDR?.includes("AA") && (
+          {step === 2 && txResultXDR && (
             <div className="modal_content relative w-[550px] max-sm:w-full pb-5 rounded-lg text-[white] border-2 border-borderColor bg-[#1B2132] p-5 max-sm:pb-16 px-16">
               {/* <div className="header flex justify-between items-start">
                 <div className="mb-6">
@@ -347,7 +347,7 @@ const WithdrawFunds: React.FC<{ setOpenState: any}> = ({
                 <div className=" flex justify-between mb-4 items-center">
                   <h1 className="text-paraDarkText">Network</h1>
                   <h1 className="text-1xl text-paraDarkText">
-                    {currentNetwork.includes("Test") && "TESTNET"}
+                    {selectedNetwork.network}
                   </h1>
                 </div>
                 <div className=" flex justify-between mb-4 items-center">

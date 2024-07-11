@@ -376,7 +376,7 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
 
                 <div className="border-t border-border_pri pt-4">
                 <div className=" flex items-center justify-between">
-                  <p className="text-white text-sm">Estimated Bonds ~(10.34)</p>
+                  <p className="text-white text-sm">Estimated Bonds</p>
                   <p className="text-white text-lg">{floatFigure(calEstimatedBonds(), 3)}</p>
                 </div>
                 <div className=" flex items-center justify-between">
@@ -472,7 +472,7 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
               <div className="mt-8">
                 <div className=" flex justify-between mb-4 items-center">
                   <h1 className="text-paraDarkText">Network</h1>
-                  <h1 className="text-1xl text-paraDarkText">TESTNET</h1>
+                  <h1 className="text-1xl text-paraDarkText">{selectedNetwork.network}</h1>
                 </div>
                 <div className=" flex justify-between mb-4 items-center">
                   <h1 className="text-paraDarkText">Estimate fee (XLM)</h1>
@@ -513,7 +513,7 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
             </div>
           )}
           {/* {step === 2 && ( */}
-          {step === 2 && txResultXDR?.includes('AA') && (
+          {step === 2 && txResultXDR && (
             <div className="modal_content relative w-[550px] max-sm:w-full pb-5 rounded-lg text-[white] border-2 border-borderColor bg-[#1B2132] p-5 max-sm:pb-16 px-16">
               {/* <div className="header flex justify-between items-start">
                 <div className="mb-6">
@@ -546,7 +546,7 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
               <h1 className="text-center text-3xl mb-5 text-gold">Deposit Successful</h1>
               <div className=" flex justify-between mb-4 items-center">
                   <h1 className="text-paraDarkText">Network</h1>
-                  <h1 className="text-1xl text-paraDarkText">{currentNetwork.includes('Test') && 'TESTNET'}</h1>
+                  <h1 className="text-1xl text-paraDarkText">{selectedNetwork.network}</h1>
                 </div>
                 <div className=" flex justify-between mb-4 items-center">
                   <h1 className="text-paraDarkText">Deposited</h1>
