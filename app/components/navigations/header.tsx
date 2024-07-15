@@ -54,7 +54,7 @@ const Header = () => {
       <motion.div
     initial={{ y: -100 }}
     animate={{ y: 0 }}
-    transition={{ type: "spring", stiffness: 300, damping: 30 }} className={`${style.header} ${isScrolled ? "fixed inset-x-0 mt-3" : "md:w-9/12 "} md:max-lg:w-11/12  w-11/12 h-[64px] flex justify-between items-center px-6 max-md:px-4 z-99 bg-dappHeaderBg`}>
+    transition={{ type: "spring", stiffness: 300, damping: 30 }} className={`${style.header} ${isScrolled ? "md:fixed inset-x-0 mt-3" : "md:w-9/12 "} md:max-lg:w-11/12  w-11/12 h-[64px] flex justify-between items-center px-6 max-md:px-4 z-99 bg-dappHeaderBg max-md:bg-[#0D021C]`}>
       <Link href={"/"}>
       <div className="logo flex items-center">
           <Image src={BondHiveLogo} width={29} height={29} alt="bondhive" />
