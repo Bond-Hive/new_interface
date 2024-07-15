@@ -88,24 +88,15 @@ export default function Home() {
   const [pools, setPools] = useState(pool);
   console.log({pools, selectedNetwork})
   useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const { data } = await GetAPY("https://bondexecution.onrender.com/monitoring/getYields");
-        
-        setPools((prevPools: any) => ({
-              ...prevPools,
-              [selectedNetwork.network]: prevPools[selectedNetwork.network].map((pool: any, index: any) => ({
-                ...pool,
-                apy: data?.data[index]?.averageYieldPostExecution?.upper,
-              })),
-        }));
-      } catch (error) {
-        console.error("Error fetching APY data:", error);
-      }
+    const interval = setInterval( async () => {
+      const {data} = await GetAPY("https://bondexecution.onrender.com/monitoring/getYields")
+      setPools((prevPools: any) =>
+        prevPools.map((pool: any, index: any) => ({ ...pool, apy: data.data[index].averageYieldPostExecution?.upper }))
+      );
     }, 10000);
   
     return () => clearInterval(interval);
-  }, [selectedNetwork.network]);
+  }, []);
 
   return (
     <>
@@ -164,7 +155,7 @@ export default function Home() {
             >
               <div className="preview mx-auto relative md:w-10/12 w-11/12">
                 <div className="table_pool_container_mobile md:grid grid-cols-2 gap-10">
-                  {pools[selectedNetwork.network]?.map((pool:any, index:any) => (
+                  {pools?.map((pool:any, index:any) => (
                     <div
                       className="table_pool_container p-5 text-secText bg-dappHeaderBg border-border_pri border rounded-md max-md:mb-5"
                       key={`${index}--pool`}

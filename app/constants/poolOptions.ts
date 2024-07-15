@@ -20,82 +20,7 @@ export interface Pool {
 }
 
 // Define the pool options
-export const pool: any= {
-  TESTNET: [
-    {
-      name: "BTC (Sept-24)",
-      contractAddress:
-        "CBEAGBYBILDESVNLVS4BMBD3RWAEOGJKFYREWWUJFJDSXJAGU45HYN5Y",
-      tokenAddress: "CDCECUBPH3UGAKNLR2Q64TWJRHWDUI7CNQTIK2C35DGWI265KJOWBXEZ",
-      tokenDecimals: 7,
-      tokenSymbol: "USDC",
-      shareId: "CBWN7DXJYWT65K5A7ZDAHUTGZMHOIQLBBFDZ6HUJ27H2IKY2RDLAI4VT",
-      shareDecimals: 7,
-      shareSymbol: "VST",
-      apy: "9.01%",
-      expiration: "27, Sept 2024",
-      underlying: "BTC Futures and Spot",
-      img: BTCBgLogo,
-      ticker: "BTC",
-      reserves: "0",
-      minimum: "100",
-    },
-    {
-      name: "ETH (Sept-24)",
-      contractAddress:
-        "CBEAGBYBILDESVNLVS4BMBD3RWAEOGJKFYREWWUJFJDSXJAGU45HYN5Y",
-      tokenAddress: "CDCECUBPH3UGAKNLR2Q64TWJRHWDUI7CNQTIK2C35DGWI265KJOWBXEZ",
-      tokenDecimals: 7,
-      tokenSymbol: "USDC",
-      shareId: "CBWN7DXJYWT65K5A7ZDAHUTGZMHOIQLBBFDZ6HUJ27H2IKY2RDLAI4VT",
-      shareDecimals: 7,
-      shareSymbol: "VST",
-      apy: "9.66%",
-      expiration: "27, Sept 2024",
-      underlying: "Ethereum Futures and Spot",
-      img: EthBgWhiteLogo,
-      ticker: "ETH",
-      reserves: "0",
-      minimum: "100",
-    },
-    {
-      name: "BTC (Dec-24)",
-      contractAddress:
-        "CBEAGBYBILDESVNLVS4BMBD3RWAEOGJKFYREWWUJFJDSXJAGU45HYN5Y",
-      tokenAddress: "CDCECUBPH3UGAKNLR2Q64TWJRHWDUI7CNQTIK2C35DGWI265KJOWBXEZ",
-      tokenDecimals: 7,
-      tokenSymbol: "USDC",
-      shareId: "CBWN7DXJYWT65K5A7ZDAHUTGZMHOIQLBBFDZ6HUJ27H2IKY2RDLAI4VT",
-      shareDecimals: 7,
-      shareSymbol: "VST",
-      apy: "9.47%",
-      expiration: "27, Dec 2024",
-      underlying: "BTC Futures and Spot",
-      img: BTCBgLogo,
-      ticker: "BTC",
-      reserves: "0",
-      minimum: "100",
-    },
-    {
-      name: "ETH (Dec-24)",
-      contractAddress:
-        "CBEAGBYBILDESVNLVS4BMBD3RWAEOGJKFYREWWUJFJDSXJAGU45HYN5Y",
-      tokenAddress: "CDCECUBPH3UGAKNLR2Q64TWJRHWDUI7CNQTIK2C35DGWI265KJOWBXEZ",
-      tokenDecimals: 7,
-      tokenSymbol: "USDC",
-      shareId: "CBWN7DXJYWT65K5A7ZDAHUTGZMHOIQLBBFDZ6HUJ27H2IKY2RDLAI4VT",
-      shareDecimals: 7,
-      shareSymbol: "VST",
-      apy: "9.20%",
-      expiration: "27, Dec 2024",
-      underlying: "Ethereum Futures and Spot",
-      img: EthBgWhiteLogo,
-      ticker: "ETH",
-      reserves: "0",
-      minimum: "100",
-    },
-  ],
-  PUBLIC: [
+export const pool: any= [
     {
       name: "BTC (Sept-24)",
       contractAddress:
@@ -167,6 +92,5 @@ export const pool: any= {
       ticker: "ETH",
       reserves: "0",
       minimum: "100",
-    },
-  ],
-};
+    }
+  ];

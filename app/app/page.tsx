@@ -38,6 +38,7 @@ const MainDapp = () => {
   const [openState, setOpenState] = useState(false)
   const [openWithdrawState, setOpenWithdrawState] = useState(false)
   const [shareBalance, setShareBalance] = useState<any>(null)
+  const [loadPool, setLoadPool] = useState(false)
   // const [selectedNetwork] = React.useState(TESTNET_DETAILS);
   // const [pools, setPools] = useState<any>(pool ? pool : [])
   const [pools, setPools] = useState(pool);
@@ -76,7 +77,7 @@ const MainDapp = () => {
       selectedNetwork.networkPassphrase
     );
 
-    const poolReserve: any = await getReserveContractCal(pool[selectedNetwork?.network][poolIndex].contractAddress, txBuilderBalance, provider, connectorWalletAddress);
+    const poolReserve: any = await getReserveContractCal(pool[poolIndex].contractAddress, txBuilderBalance, provider, connectorWalletAddress);
     setPoolReserve({[poolIndex]: parseFloat(poolReserve).toFixed(2).toString()})
     return poolReserve
   }
@@ -116,55 +117,45 @@ const MainDapp = () => {
       selectedNetwork.networkPassphrase
     );
 
-    const shareBalance: any = await getShareCont(pool[selectedNetwork.network][poolIndex].shareId, txBuilderBalance, provider, connectorWalletAddress);
+    const shareBalance: any = await getShareCont(pool[poolIndex].shareId, txBuilderBalance, provider, connectorWalletAddress);
     setShareBalance({[poolIndex]:shareBalance})
     return shareBalance
   }
 
   useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const { data } = await GetAPY("https://bondexecution.onrender.com/monitoring/getYields");
-        if (data) setLoadingApy(false);
-        
-        setPools((prevPools: any) => ({
-              ...prevPools,
-              [selectedNetwork.network]: prevPools[selectedNetwork.network]?.map((pool: any, index: any) => ({
-                ...pool,
-                apy: data?.data[index]?.averageYieldPostExecution?.upper,
-              })),
-        }));
-      } catch (error) {
-        console.error("Error fetching APY data:", error);
-      }
+    const interval = setInterval( async () => {
+      const {data} = await GetAPY("https://bondexecution.onrender.com/monitoring/getYields")
+      if(data) setLoadingApy(false)
+      setPools((prevPools: any) =>
+        prevPools.map((pool: any, index: any) => ({ ...pool, apy: data.data[index].averageYieldPostExecution?.upper }))
+      );
     }, 10000);
   
     return () => clearInterval(interval);
-  }, [selectedNetwork.network]);
+  }, []);
 console.log({selectedNetwork})
   useEffect(() => {
-
-    const updatedPool = async () => {
-      if(connectorWalletAddress && pool){
-        const updatedPools = await Promise.all(pools[selectedNetwork?.network].map(async (pool: any, index: number) => {
-          const reserves = await getPoolReserve(index)
-          const shareBalance = await getShareBalance(index)
-          const maturityDate = await readContract("maturity", index)
-          console.log({maturityDate})
-          const now = BigInt(Math.floor(Date.now() / 1000))
-          return {
-            ...pool,
-            reserves,
-            shareBalance,
-            position: Number(shareBalance) * 100,
-            depositEnabled: BigInt(maturityDate) > now
-          }
-        }))
-        setPools({[selectedNetwork?.network]: updatedPools})
+      const updatedPool = async () => {
+        if(connectorWalletAddress && pool){
+          const updatedPools = await Promise.all(pools.map(async (pool: any, index: number) => {
+            const reserves = await getPoolReserve(index)
+            const shareBalance = await getShareBalance(index)
+            const maturityDate = await readContract("maturity", index)
+            const now = BigInt(Math.floor(Date.now() / 1000))
+            return {
+              ...pool,
+              reserves,
+              shareBalance,
+              position: Number(shareBalance) * 100,
+              depositEnabled: BigInt(maturityDate) > now
+            }
+          }))
+          setPools(updatedPools)
+          setLoadPool(true)
+        }
       }
-    }
-    updatedPool()
-  }, [connectorWalletAddress,  transactionsStatus?.deposit, transactionsStatus, selectedNetwork])
+      updatedPool()
+  }, [connectorWalletAddress,  transactionsStatus?.deposit, transactionsStatus])
 
       //  READ FUNCTION
       const readContIntr = async (
@@ -196,7 +187,7 @@ console.log({selectedNetwork})
           selectedNetwork.networkPassphrase
         );
     
-        const result: any = await readContIntr(pool[selectedNetwork.network][index].contractAddress, txBuilderBalance, provider, connectorWalletAddress, functName);
+        const result: any = await readContIntr(pool[index].contractAddress, txBuilderBalance, provider, connectorWalletAddress, functName);
         const now = BigInt(Math.floor(Date.now() / 1000))
         return result
       }
@@ -204,7 +195,7 @@ console.log({selectedNetwork})
   const sortFunc = (type: string) => {
     if(type === "apy"){
       setPools((prevPools: any) => {
-        const sortedPools = [...prevPools[selectedNetwork.network]].sort((a, b) => {
+        const sortedPools = [...prevPools].sort((a, b) => {
           if (sortOrder === 'asc') {
             return parseFloat(a.apy) - parseFloat(b.apy);
           } else {
@@ -212,12 +203,12 @@ console.log({selectedNetwork})
           }
         });
         console.log({sortedPools})
-        return  {[selectedNetwork.network]:sortedPools};
+        return  {sortedPools};
       });
       setSortOrder(prevOrder => (prevOrder === 'asc' ? 'desc' : 'asc'));
     } else{
       setPools((prevPools: any) => {
-        const sortedPools = [...prevPools[selectedNetwork.network]].sort((a, b) => {
+        const sortedPools = [...prevPools].sort((a, b) => {
           if (sortOrder === 'asc') {
             return parseFloat(a.reserves) - parseFloat(b.reserves);
           } else {
@@ -225,7 +216,7 @@ console.log({selectedNetwork})
           }
         });
         console.log({sortedPools})
-        return {[selectedNetwork.network]:sortedPools};
+        return {sortedPools};
       });
       setSortOrder(prevOrder => (prevOrder === 'asc' ? 'desc' : 'asc'));
     }
@@ -236,6 +227,12 @@ console.log({selectedNetwork})
       <DAppHeader />
 
       <div className="md:w-9/12 md:max-lg:w-11/12 mx-auto md:pt-24 pt-8 px-5">
+      {
+        selectedNetwork.network === "TESTNET" &&       <div className="card max-w-[1100px] mx-auto px-4 text-lg text-center py-9 mb-6">
+        <p className="text-red-500 text-3xl">You are connected to the wrong network. Switch To Mainnet</p>
+        <Link href={"https://testnet-bondhive.vercel.app/app"} target="_blank"><p className=" text-white underline">Link to use testnet</p></Link>
+      </div>
+      }
         {/* three cards */}
         <div className="max-sm:max-w-10/12 max-sm:overflow-x-scroll max-w-[1100px] mx-auto">
           <div className=" max-sm:gri flex grid-cols-3 md:gap-6 gap-3 max-sm:w-[850px ">
@@ -420,8 +417,10 @@ console.log({selectedNetwork})
                 <h2 className="text-[15px]">Actions</h2>
               </div>
             </div>
+            {
+          loadPool && selectedNetwork.network !== "TESTNET" ? (
             <div className="table_pool_container max-lg:hidden">
-              {pools[selectedNetwork?.network]?.map((pool: any, index: number) => (
+              {pools.map((pool: any, index: number) => (
                 <div
                   className={`table_pool flex items-start px-4 border-border_pri pb-3 pt-6 ${
                     index !== 0 && "border-t"
@@ -519,9 +518,13 @@ console.log({selectedNetwork})
                 </div>
               ))}
             </div>
+                      ) : <div className="h-80 flex justify-center items-center gap-2"> <Loading/><p className="text-white">Loading Pools...</p></div>
+                    }
             {/*Mobile Pool Strategies */}
+            {
+          loadPool && selectedNetwork.network !== "TESTNET"  ? (
             <div className="table_pool_container_mobile flex-col gap-4 hidden max-lg:flex">
-              {pool[selectedNetwork?.network].map((pool: any, index:number) => (
+              {pool.map((pool: any, index:number) => (
                 <div
                   className="table_pool_container p-5 text-secText"
                   key={`${index}--pool`}
@@ -630,6 +633,9 @@ console.log({selectedNetwork})
                 </div>
               ))}
             </div>
+            ) : <div className="h-80 justify-center items-center gap-2 hidden max-lg:flex"> <Loading/><p className="text-white">Loading Pools...</p></div>
+          }
+
           </div>
         </div>
       </div>
