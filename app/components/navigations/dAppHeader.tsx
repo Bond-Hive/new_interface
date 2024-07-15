@@ -164,7 +164,7 @@ const DAppHeader = () => {
       selectedNetwork.networkPassphrase
     );
     try {
-      const tokenBalanceUser: any = await getTokenBalance(pool[selectedNetwork?.network][0].tokenAddress,
+      const tokenBalanceUser: any = await getTokenBalance(pool[0].tokenAddress,
         txBuilderBalance,
         server,
         connectorWalletAddress
@@ -193,7 +193,7 @@ const DAppHeader = () => {
       // console.log({walletNetworkDet: await getNetworkDetails()})
       // console.log({ walletNetwork: networkPassphrase });
       setSelectedNetwork(networkDetails)
-      setWalletNetwork(networkDetails.network === 'PUBLIC' ? 'Stellar Mainnet' : "Stellar Testnet");
+      setWalletNetwork('Stellar Mainnet');
       return 
     }
     return null; 
