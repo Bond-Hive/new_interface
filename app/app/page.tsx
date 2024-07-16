@@ -220,7 +220,7 @@ console.log({selectedNetwork})
       {
         selectedNetwork.network === "TESTNET" &&       <div className="card max-w-[1100px] mx-auto px-4 text-lg text-center py-9 mb-6">
         <p className="text-red-500 text-3xl">You are connected to the wrong network. Switch To Mainnet</p>
-        <Link href={"https://testnet-bondhive.vercel.app/app"} target="_blank"><p className=" text-white underline">Link to use testnet</p></Link>
+        <Link href={"https://testnet.bondhive.xyz/app"} target="_blank"><p className=" text-white underline">Link to use testnet</p></Link>
       </div>
       }
         {/* three cards */}
