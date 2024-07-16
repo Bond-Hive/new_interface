@@ -49,6 +49,8 @@ import {
 import Loading from "../UI-assets/loading";
 import { pool } from "@/app/constants/poolOptions";
 import { formatFigures } from "../web3FiguresHelpers";
+import { ChartBarIcon, CurrencyEuroIcon } from "@heroicons/react/24/outline";
+import { usePathname } from "next/navigation";
 
 export const kit: StellarWalletsKit = new StellarWalletsKit({
   network: WalletNetwork.PUBLIC,
@@ -226,6 +228,7 @@ const [networkChange, setNetworkChange] = useState(false)
     inferredNetwork();
   }, [networkChange]);
   console.log({networkk: selectedNetwork.network})
+  const pathName = usePathname()
   return (
     <div className="w-full relative">
       <div className="">
@@ -256,40 +259,18 @@ const [networkChange, setNetworkChange] = useState(false)
           </Link>
           <ul className="flex justify-between gap-7 pl-3 max-lg:hidden">
           <Link href={"/app"}>
-            <li className="flex items-center gap-2">
-              <Image
-                src={InvestIcon}
-                width={20}
-                height={20}
-                alt="InvestIcon"
-                className=""
-              />
-              <p className="text-[#937ED6]">Invest</p>
-            </li>
-            </Link>
-            {/* <li className="flex items-center gap-2">
-              <Image
-                src={EarnIcon}
-                width={20}
-                height={20}
-                alt="InvestIcon"
-                className=""
-              />
-              <p className="text-paraDarkText">Markets</p>
-            </li> */}
-                         <Link href={"/app/markets"}>
-            <li className="flex items-center gap-2 w-[200px]">
- 
-              <Image
-                src={AnalyticsIcon}
-                width={20}
-                height={20}
-                alt="InvestIcon"
-                className=""
-              />
-              <p className="text-paraDarkText">Markets</p>
-            </li>
-            </Link>
+          <li className={`flex items-center gap-2 ${pathName === "/app" ? "text-[#937ED6]" : "text-white"}`}>
+          <CurrencyEuroIcon className="w-[20px]"/>
+            <p>Invest</p>
+          </li>
+          </Link>
+           <Link href={"/app/markets"}>
+          <li className={`flex items-center gap-2 ${pathName === "/app/markets" ? "text-[#937ED6]" : "text-white"}`}>
+
+          <ChartBarIcon className="w-[20px]"/>
+            <p>Markets</p>
+          </li>
+          </Link>
           </ul>
         </div>
         <div className="flex justify-between items-center md:gap-5 gap-3">
