@@ -59,6 +59,7 @@ const Header = () => {
       <div className="logo flex items-center">
           <Image src={BondHiveLogo} width={29} height={29} alt="bondhive" />
           <p className="text-lg font-semibold text-white">Bondhive</p>
+          <p className="text-sm card px-2 py-1 ml-2 text-white max-sm:hidden">Beta.</p>
         </div>
       </Link>
         <div className="max-md:hidden">
