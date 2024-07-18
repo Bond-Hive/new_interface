@@ -629,7 +629,7 @@ export default function Home() {
               variants={getAnimationVariants(1.2)}
               initial="out"
               animate={historyYield2InView ? "in" : "out"}
-              className="md:flex justify-between items-center xl:w-[1060px] mx-auto md:px-0 px-10"
+              className="md:flex items-center xl:w-[1060px] mx-auto md:px-0 px-10"
             >
               <p className="subtitle_p md:w-[592px]">
                 For a closer look, please visit our Dune Analytics dashboard.

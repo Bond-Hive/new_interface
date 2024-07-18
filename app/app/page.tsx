@@ -219,7 +219,7 @@ console.log({selectedNetwork})
       <div className="md:w-9/12 md:max-lg:w-11/12 mx-auto md:pt-24 pt-8 px-5">
       {
         selectedNetwork.network === "TESTNET" &&       <div className="card max-w-[1100px] mx-auto px-4 text-lg text-center py-9 mb-6">
-        <p className="text-red-500 text-3xl">You are connected to the wrong network. Switch To Mainnet</p>
+        <p className="text-white text-2xl">You are connected to the wrong network. Please switch to mainnet.</p>
         <Link href={"https://testnet.bondhive.xyz/app"} target="_blank"><p className=" text-white underline">Link to use testnet</p></Link>
       </div>
       }
