@@ -471,7 +471,7 @@ console.log({selectedNetwork})
                   </div>
                   <div className="flex flex-col gap-4 items-cente w-3/12">
                   <button
-                      className={"button1 px-9 py-[7px] gap-1 hover:bg-transparent cursor-pointer"}
+                      className={`px-9 py-[7px] gap-1 cursor-pointer ${!connectorWalletAddress || Number(pool?.shareBalance) <= 0 ? "hover:bg-transparent button1" : "button2"}`}
                       onClick={() => {
                         setOpenWithdrawState(true)
                         setSelectedPool(pool)
