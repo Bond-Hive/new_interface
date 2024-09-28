@@ -39,7 +39,7 @@ const WithdrawFunds: React.FC<{ setOpenState: any}> = ({
   } = UseStore();
   const provider = getServer(selectedNetwork);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [fee, setFee] = React.useState(BASE_FEE);
+  const [fee, setFee] = React.useState('1');
   const [step, setStep] = useState(0);
   const [isGettingFee, setIsGettingFee] = useState<Boolean | null>(null);
   const contractAddress = selectedPool.contractAddress;
@@ -49,6 +49,7 @@ const WithdrawFunds: React.FC<{ setOpenState: any}> = ({
   const [txResultXDR, setTxResultXDR] = useState<String | null>(null);
   const [notEnoughBal, setNotEnoughBal] = useState(false);
   const maturity = selectedPool?.maturityTimeStamp
+  console.log({fee})
   const signWithFreighter = async () => {
     setIsSubmitting(true);
 
@@ -315,7 +316,7 @@ const WithdrawFunds: React.FC<{ setOpenState: any}> = ({
                       alt="right"
                       className=""
                     />
-                    <h1 className="text-white text-[13px]">USDC</h1>
+                    <h1 className="text-white text-[13px]">{selectedPool?.name}</h1>
                   </div>
                   <div className="">
                     <input
@@ -343,7 +344,7 @@ const WithdrawFunds: React.FC<{ setOpenState: any}> = ({
                     <p className="text-[14px] text-paraDarkText">
                       Avail. Shares:
                     </p>
-                    <h2 className="text-[14px] text-white">${selectedPool.shareBalance}</h2>
+                    <h2 className="text-[14px] text-white">{selectedPool.shareBalance}</h2>
                   </div>
                   {/* <h2 className="text-[14px] text-paraDarkText">$23,123</h2> */}
                 </div>
