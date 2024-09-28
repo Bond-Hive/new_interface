@@ -29,9 +29,20 @@ const floatFigure = (number:number, noToFix:number) => {
 const formatWithCommas = (number: number) => {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
-
+const dateFormat = (timestamp: string) => {
+    const timestampNum = Number(timestamp);
+   const date = new Date(timestampNum * 1000);
+   
+   const day = date.getDate();
+   const month = date.toLocaleString('en-US', { month: 'short' });
+   const year = date.getFullYear();
+   
+   const formattedDate = `${day}, ${month} ${year}`;
+   return formattedDate
+   }
 export {
     formatFigures,
     floatFigure,
-    formatWithCommas
+    formatWithCommas,
+    dateFormat
 }

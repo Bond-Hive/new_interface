@@ -48,6 +48,7 @@ const WithdrawFunds: React.FC<{ setOpenState: any}> = ({
   const [signedXdr, setSignedXdr] = React.useState("");
   const [txResultXDR, setTxResultXDR] = useState<String | null>(null);
   const [notEnoughBal, setNotEnoughBal] = useState(false);
+  const maturity = selectedPool?.maturityTimeStamp
   const signWithFreighter = async () => {
     setIsSubmitting(true);
 
@@ -158,6 +159,42 @@ const WithdrawFunds: React.FC<{ setOpenState: any}> = ({
       setNotEnoughBal(false);
     }
   }, [depositAmount, userBalance]);
+
+  const calculateAPY = () => {
+    
+    const bondsHeld = Number(selectedPool?.shareBalance)
+    const amountDeposited = Number(selectedPool?.reserves)
+    const maturityDate: Date = new Date(Number(maturity) * 1000);
+    const currentDate: Date = new Date();
+    const timeDifference: number = maturityDate.getTime() - currentDate.getTime();
+    const daysToMaturity: number = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
+
+
+    const redemptionValue = Number(bondsHeld) * 100;
+    const absoluteReturn = ((redemptionValue / Number(amountDeposited)) - 1) * 100;
+    const annualizedReturn = (365 / daysToMaturity) * absoluteReturn;
+
+    console.log({annualizedReturn,amountDeposited,redemptionValue, absoluteReturn, daysToMaturity})
+    return annualizedReturn;
+};
+
+ const APY = calculateAPY()
+
+
+ const [copied, setCopied] = useState(false);
+
+ const copyToClipboard = async () => {
+   if (selectedPool?.shareId) {
+     try {
+       await navigator.clipboard.writeText(selectedPool?.shareId);
+       setCopied(true);
+       setTimeout(() => setCopied(false), 2000);
+     } catch (err) {
+       console.error('Failed to copy text: ', err);
+     }
+   }
+ };
+
   return (
     <>
       <div
@@ -168,7 +205,9 @@ const WithdrawFunds: React.FC<{ setOpenState: any}> = ({
             <div className="modal_content relative w-[550px] max-sm:w-full pb-5 rounded-lg text-[white] border-2 border-borderColor bg-[#1B2132] p-5 max-sm:pb-16">
               <div className="header flex justify-between items-start">
                 <div className="mb-6">
-                  <h1 className="text-lg">My Position</h1>
+                <h1 className="text-lg">
+                    My Position - {selectedPool?.name}
+                  </h1>
                   <p className="text-paraDarkText text-sm">
                     Details of my position
                   </p>
@@ -187,23 +226,49 @@ const WithdrawFunds: React.FC<{ setOpenState: any}> = ({
                 </div>
               </div>
               <div className="currency_container p-3">
-                <div className=" flex justify-between mb-4">
-                  <p className="text-paraDarkText text-sm">Available Shares</p>
-                  <p className="text-white text-sm">{formatWithCommas(Number(floatFigure(selectedPool.shareBalance,2)))}</p>
+              <div className=" flex justify-between mb-4">
+                  <p className=" text-sm">Available Shares</p>
+                   <div className="flex gap-2 items-center">
+                   <p className="text-white text-sm">{formatWithCommas(Number(floatFigure(selectedPool.shareBalance,2)))}</p>
+
+                   </div>
                 </div>
                 <div className=" flex justify-between mb-4">
-                  <p className="text-paraDarkText text-sm">Estimated redemption value</p>
+                  <p className=" text-sm">Estimated redemption value</p>
                   <p className="text-white text-sm">{formatWithCommas(Number(floatFigure(selectedPool.position,2)))}</p>
                 </div>
               </div>
-              {!withdrawalEnabled && <p className="text-sm text-bluish font-semibold mt-7">Investor can redeem post maturity {selectedPool.expiration} at 8:00 am GMT</p>}
+              <div className="copy_bond my-4  currency_container py-3 px-3">
+                <div className="mb-3 flex justify-between items-center">
+                  <p className=" text-sm ">
+                    Add Bond Token - {selectedPool?.name} to wallet
+                  </p>
+
+                    <p className="text_grey text-[12px] underline cursor-pointer">Learn More</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <p className="text-sm text_grey cursor-pointer" onClick={copyToClipboard}>{`${selectedPool?.shareId.substring(
+                    0,
+                    7
+                  )}....${selectedPool?.shareId.substring(
+                    selectedPool?.shareId.length - 7
+                  )}`}</p>
+                  <button
+                    className="button text-[10px] bg-blue-600 p-1 px-3 rounded-md "
+                    onClick={copyToClipboard}
+                  >
+                    {copied? 'Copied': 'Copy'}
+                  </button>
+                </div>
+              </div>
+              {!withdrawalEnabled && <p className="text-sm text-bluish font-semibold ">Investor can redeem post maturity {selectedPool.expiration} at 8:00 am GMT</p>}
                 <div className="flex max-sm:flex-col justify-between gap-3 mt-4">
-                  <button className="button1 text-paraDarkText w-1/2 max-sm:w-full py-3">Secondary Market (soon)</button>
-                  <button className="button1 text-paraDarkText w-1/2 max-sm:w-full py-3">Buyback (soon)</button>
+                  <button className="disable_btn  w-1/2 max-sm:w-full py-3">Secondary Market (soon)</button>
+                  <button className="disable_btn  w-1/2 max-sm:w-full py-3">Buyback (soon)</button>
                 </div>
               <button
                className={`mt-4 py-3 w-full flex ${
-                Number(selectedPool.shareBalance) <= 0 || !withdrawalEnabled ? "button1 text-paraDarkText hover:bg-transparent" : "proceed"
+                Number(selectedPool.shareBalance) <= 0 || !withdrawalEnabled ? "disable_btn hover:bg-transparent" : "proceed"
               }`}
                 onClick={() => setStep(1)}
                 disabled={Number(selectedPool.shareBalance) <= 0 || !withdrawalEnabled}

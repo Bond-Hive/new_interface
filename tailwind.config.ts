@@ -27,7 +27,8 @@ const config: Config = {
      dappHeaderBg: "rgba(206, 206, 251, 0.04)",
      selectTabBg: "rgba(206, 206, 251, 0.02)",
      gold: "#70FF87",
-     blueBg: "rgba(165, 134, 254, 0.11)"
+     blueBg: "rgba(165, 134, 254, 0.11)",
+     grey: "#9793A9"
     }
   },
   plugins: [],

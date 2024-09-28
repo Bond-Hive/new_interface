@@ -86,14 +86,29 @@ export default function Home() {
   };
 
   const [pools, setPools] = useState(pool);
-  console.log({pools, selectedNetwork})
+  // console.log({pools, selectedNetwork})
   useEffect(() => {
-    const interval = setInterval( async () => {
-      const {data} = await GetAPY("https://bondexecution.onrender.com/monitoring/getYields")
-      setPools((prevPools: any) =>
-        prevPools.map((pool: any, index: any) => ({ ...pool, apy: data.data[index].averageYieldPostExecution?.upper }))
+    const fetchData = async () => {
+      const { data } = await GetAPY("https://bondexecution.onrender.com/monitoring/getYields");
+      setPools((prevPools: any) => {
+        const updatedPools = prevPools.map((pool: any) => {
+          const activePool = data?.data.find((activePool: any) => activePool?.symbolFuture === pool?.symbolFuture)
+
+            return {
+              ...pool,
+              apy: activePool?.averageYieldPostExecution?.upper || "expired"
+            }
+        })
+        return updatedPools.sort((a: any, b: any) => (a.apy === "expired" ? 1 : -1))
+      }
       );
-    }, 10000);
+    };
+  
+    // Initial fetch
+    fetchData();
+  
+    // Fetch every 10 seconds
+    const interval = setInterval(fetchData, 10000);
   
     return () => clearInterval(interval);
   }, []);
@@ -183,7 +198,11 @@ export default function Home() {
                           <p>APY</p>
                           <AnimatePresence mode="wait">
                           <motion.h1
-                            className="text-3xl font-bold text-gold"
+                            className={`text-3xl font-bold  ${
+                              pool.apy == "expired"
+                                ? "text-red-600 uppercase"
+                                : "text-gold"
+                            }`}
                             key={pool.apy}
                             initial={{ opacity: 0, y: -10 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -247,7 +266,7 @@ export default function Home() {
                         className={`w-full button2 flex items-center justify-center px-9 py-3 gap-1`}
                         // onClick={() => setOpenState(true)}
                       >
-                        <p className="text-sm">Invest Now</p>
+                        <p className="text-sm">Launch dApp</p>
                         <ChevronRightIcon className="w-[13px] h-[13px]"/>
                       </button>
                     </div>
@@ -629,7 +648,7 @@ export default function Home() {
               variants={getAnimationVariants(1.2)}
               initial="out"
               animate={historyYield2InView ? "in" : "out"}
-              className="md:flex items-center xl:w-[1060px] mx-auto md:px-0 px-10"
+              className="md:flex items-center xl:w-[1060px] mx-auto md:px-0 px-10 justify-between"
             >
               <p className="subtitle_p md:w-[592px]">
                 For a closer look, please visit our Dune Analytics dashboard.
