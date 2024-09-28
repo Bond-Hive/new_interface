@@ -49,7 +49,7 @@ import {
 import Loading from "../UI-assets/loading";
 import { pool } from "@/app/constants/poolOptions";
 import { formatFigures } from "../web3FiguresHelpers";
-import { ChartBarIcon, CurrencyEuroIcon } from "@heroicons/react/24/outline";
+import { ChartBarIcon, CircleStackIcon, CurrencyEuroIcon } from "@heroicons/react/24/outline";
 import { usePathname } from "next/navigation";
 
 export const kit: StellarWalletsKit = new StellarWalletsKit({
@@ -237,7 +237,7 @@ const [networkChange, setNetworkChange] = useState(false)
           width={1152}
           height={380}
           alt="bondhive"
-          className="absolute -top-20 right-10"
+          className="absolute -top-20 right-10 -z-10"
         />
         <Image
           src={LightRay}
@@ -270,6 +270,13 @@ const [networkChange, setNetworkChange] = useState(false)
 
           <ChartBarIcon className="w-[20px]"/>
             <p>Markets</p>
+          </li>
+          </Link>
+           <Link href={"/app/farm"}>
+          <li className={`flex items-center gap-2 ${pathName === "/app/farm" ? "text-[#937ED6]" : "text-white"}`}>
+
+          <CircleStackIcon className="w-[20px]"/>
+            <p>Farm</p>
           </li>
           </Link>
           </ul>
