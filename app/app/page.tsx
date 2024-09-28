@@ -157,39 +157,45 @@ const MainDapp = () => {
     setShareBalance({ [poolIndex]: shareBalance });
     return shareBalance;
   };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data } = await GetAPY(
-        "https://bondexecution.onrender.com/monitoring/getYields"
-      );
-      if (data) {
-        setLoadingApy(true);
-        // for testing
-        setPools((prevPools: any) => {
-          const updatedPools = prevPools.map((pool: any) => {
-            const activePool = data?.data.find(
-              (activePool: any) =>
-                activePool?.symbolFuture === pool?.symbolFuture
-            );
-
-            return {
-              ...pool,
-              apy: activePool?.averageYieldPostExecution?.upper || "expired",
-            };
-          });
-          return updatedPools.sort((a: any, b: any) =>
-            a.apy === "expired" ? 1 : -1
+  const fetchData = async () => {
+    // setLoadingApy(true);
+    const { data } = await GetAPY(
+      "https://bondexecution.onrender.com/monitoring/getYields"
+    );
+    if (data) {
+      setLoadingApy(true);
+      // for testing
+      setPools((prevPools: any) => {
+        const updatedPools = prevPools.map((pool: any) => {
+          const activePool = data?.data.find(
+            (activePool: any) =>
+              activePool?.symbolFuture === pool?.symbolFuture
           );
-        });
-        setLoadingApy(false);
-      }
-    };
 
-    fetchData();
+          return {
+            ...pool,
+            apy: activePool?.averageYieldPostExecution?.upper || "expired",
+          };
+        });
+        return updatedPools.sort((a: any, b: any) =>
+          a.apy === "expired" ? 1 : -1
+        );
+      });
+      setLoadingApy(false);
+    }
+  };
+  useEffect(() => {
+
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, []);
+
+
+  useEffect(() => {
+    if(pools[0]?.expiration){
+        fetchData();
+    }
+  }, [])
   console.log({ selectedNetwork });
   useEffect(() => {
     const updatedPool = async () => {
@@ -208,6 +214,7 @@ const MainDapp = () => {
               expiration: dateFormat(maturityDate),
               position: Number(shareBalance) * 100,
               depositEnabled: BigInt(maturityDate) > now,
+              apy: pool?.apy
             };
           })
         );
@@ -507,7 +514,7 @@ const MainDapp = () => {
                         }`}
                       >
                         {" "}
-                        {loadingApy ? (
+                        {!pool.expiration || loadingApy ? (
                           <div className="w-[60px] skeleton py-3 animate-puls shadow-md"></div>
                         ) : (
                           pool?.apy
