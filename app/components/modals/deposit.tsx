@@ -39,7 +39,7 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
   } = UseStore();
   const provider = getServer(selectedNetwork);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [fee, setFee] = React.useState(BASE_FEE);
+  const [fee, setFee] = React.useState('1');
   const [step, setStep] = useState(0);
   const [isGettingFee, setIsGettingFee] = useState<Boolean | null>(null);
   const contractAddress = selectedPool.contractAddress;
