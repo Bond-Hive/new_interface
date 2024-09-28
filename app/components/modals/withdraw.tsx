@@ -309,13 +309,6 @@ const WithdrawFunds: React.FC<{ setOpenState: any}> = ({
 
                 <div className=" flex justify-between items-center mb-2">
                   <div className="token flex items-center gap-1 px-3 py-2">
-                    <Image
-                      src={UsdcBgLogo}
-                      width={24}
-                      height={24}
-                      alt="right"
-                      className=""
-                    />
                     <h1 className="text-white text-[13px]">{selectedPool?.name}</h1>
                   </div>
                   <div className="">
