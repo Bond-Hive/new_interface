@@ -38,6 +38,7 @@ export const pool: any= [
       ticker: "BTC",
       reserves: "0",
       minimum: "100",
+      symbolFuture:"BTCUSD_240827"
     },
     {
       name: "ETH (Sept-24)",
@@ -56,6 +57,7 @@ export const pool: any= [
       ticker: "ETH",
       reserves: "0",
       minimum: "10",
+        symbolFuture:"ETHUSD_240827"
     },
     {
       name: "BTC (Dec-24)",

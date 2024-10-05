@@ -66,6 +66,8 @@ const MainDapp = () => {
   const [openWithdrawState, setOpenWithdrawState] = useState(false);
   const [shareBalance, setShareBalance] = useState<any>(null);
   const [loadPool, setLoadPool] = useState(false);
+  const nullAddress = "GB3FAF7IKMH4KMZGL35RMN4ZJK7VLAXOQHK44DWX6VGVOLLUGMPIDMT5"
+    const connectorAddr = connectorWalletAddress ? connectorWalletAddress : nullAddress
   // const [selectedNetwork] = React.useState(TESTNET_DETAILS);
   // const [pools, setPools] = useState<any>(pool ? pool : [])
   const [pools, setPools] = useState(pool);
@@ -95,7 +97,7 @@ const MainDapp = () => {
 
   const getPoolReserve = async (poolIndex: number) => {
     const txBuilderBalance = await getTxBuilder(
-      connectorWalletAddress!,
+      connectorAddr,
       BASE_FEE,
       provider,
       selectedNetwork.networkPassphrase
@@ -105,7 +107,7 @@ const MainDapp = () => {
       pool[poolIndex].contractAddress,
       txBuilderBalance,
       provider,
-      connectorWalletAddress
+      connectorAddr
     );
     setPoolReserve({
       [poolIndex]: parseFloat(poolReserve).toFixed(2).toString(),
@@ -142,7 +144,7 @@ const MainDapp = () => {
   };
   const getShareBalance = async (poolIndex: number) => {
     const txBuilderBalance = await getTxBuilder(
-      connectorWalletAddress!,
+      connectorAddr!,
       BASE_FEE,
       provider,
       selectedNetwork.networkPassphrase
@@ -152,7 +154,7 @@ const MainDapp = () => {
       pool[poolIndex].shareId,
       txBuilderBalance,
       provider,
-      connectorWalletAddress
+      connectorAddr
     );
     setShareBalance({ [poolIndex]: shareBalance });
     return shareBalance;
@@ -189,42 +191,35 @@ const MainDapp = () => {
     const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, []);
-
-
-  useEffect(() => {
-    if(pools[0]?.expiration){
-        fetchData();
+  // console.log({ selectedNetwork });
+  const updatedPool = async () => {
+    if (pool) {
+      const updatedPools = await Promise.all(
+        pools.map(async (pool: any, index: number) => {
+          const reserves = await getPoolReserve(index);
+          const shareBalance =connectorAddr && await getShareBalance(index);
+          const maturityDate: string = await readContract("maturity", index);
+          const now = BigInt(Math.floor(Date.now() / 1000));
+          return {
+            ...pool,
+            reserves,
+            shareBalance,
+            maturityTimeStamp: maturityDate,
+            expiration: dateFormat(maturityDate),
+            position: Number(shareBalance) * 100,
+            depositEnabled: BigInt(maturityDate) > now,
+            apy: pool?.apy
+          };
+        })
+      );
+      setPools(updatedPools);
+      setLoadPool(true);
     }
-  }, [])
-  console.log({ selectedNetwork });
+  };
   useEffect(() => {
-    const updatedPool = async () => {
-      if (connectorWalletAddress && pool) {
-        const updatedPools = await Promise.all(
-          pools.map(async (pool: any, index: number) => {
-            const reserves = await getPoolReserve(index);
-            const shareBalance = await getShareBalance(index);
-            const maturityDate: string = await readContract("maturity", index);
-            const now = BigInt(Math.floor(Date.now() / 1000));
-            return {
-              ...pool,
-              reserves,
-              shareBalance,
-              maturityTimeStamp: maturityDate,
-              expiration: dateFormat(maturityDate),
-              position: Number(shareBalance) * 100,
-              depositEnabled: BigInt(maturityDate) > now,
-              apy: pool?.apy
-            };
-          })
-        );
-        setPools(updatedPools);
-        setLoadPool(true);
-      }
-    };
-    updatedPool();
-  }, [connectorWalletAddress, transactionsStatus?.deposit, transactionsStatus]);
 
+    updatedPool();
+  }, [connectorAddr, transactionsStatus?.deposit, transactionsStatus]);
   //  READ FUNCTION
   const readContIntr = async (
     id: string,
@@ -247,7 +242,7 @@ const MainDapp = () => {
   };
   const readContract = async (functName: string, index: number) => {
     const txBuilderBalance = await getTxBuilder(
-      connectorWalletAddress!,
+      connectorAddr!,
       BASE_FEE,
       provider,
       selectedNetwork.networkPassphrase
@@ -257,7 +252,7 @@ const MainDapp = () => {
       pool[index].contractAddress,
       txBuilderBalance,
       provider,
-      connectorWalletAddress,
+      connectorAddr,
       functName
     );
     const now = BigInt(Math.floor(Date.now() / 1000));
@@ -279,7 +274,7 @@ const MainDapp = () => {
         }
       });
       console.log({ sortedPools });
-      return sortedPools; // Return the sortedPools array directly, not wrapped in an object
+      return sortedPools;
     });
 
     setSortOrder((prevOrder) => (prevOrder === "asc" ? "desc" : "asc"));
