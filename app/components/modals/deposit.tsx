@@ -380,7 +380,7 @@ const DepositFunds: React.FC<{ setOpenState: any }> = ({ setOpenState }) => {
                       ${formatWithCommas(userBalance)}
                     </h2>
                   </div>
-                  <h2 className="text-[14px] text_grey"><small>Min.</small> 100 USDC</h2>
+                  <h2 className="text-[14px] text_grey"><small>Min.</small> {selectedPool.minimum} USDC</h2>
                 </div>
 
                 <div className="border-t border-border_pri pt-4 mt-6">
