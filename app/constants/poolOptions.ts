@@ -22,13 +22,13 @@ export interface Pool {
 // Define the pool options
 export const pool: any= [
     {
-      name: "BTC (Sept-24)",
+      name: "BTC (Mar-25)",
       contractAddress:
-        "CCKSPKZ576YRXHBB4E4NAEQSBY55S4NPCRBALMKFDTIC2GTEJTYGDC2P",
+        "CB5LRBLBP5ATWIADFWKBBEAHET5VHPBHNI645CYEWAGZ3FJFCUZ77JJC",
       tokenAddress: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
       tokenDecimals: 7,
       tokenSymbol: "USDC",
-      shareId: "CDM2E2QGEAXAN3VHQ4ILXG2SAXF57SAFHBI2ZK2IHOHALQMFW4MTSN6I",
+      shareId: "CBEBQCQ7S6INRNRPDMSJHXXFQ3PRYJN6DVS6KSPPV4RIP7MCD55WYOGY",
       shareDecimals: 7,
       shareSymbol: "VST",
       apy: "0.0%",
@@ -41,13 +41,13 @@ export const pool: any= [
       symbolFuture:"BTCUSD_240827"
     },
     {
-      name: "ETH (Sept-24)",
+      name: "ETH (Mar-25)",
       contractAddress:
-        "CCG3PJRSMGLO4NTZ5LKPAJUATIQW4PYVXWKZRQOUPIGMZNYXRAXJKP5S",
+        "CATCQIV7C5QTCLMBXQ3LZ3U6BQFL5AMAFOKXNLSLDK6CLBFBJWO7CHVH",
       tokenAddress: "CCW67TSZV3SSS2HXMBQ5JFGCKJNXKZM7UQUWUZPUTHXSTZLEO7SJMI75",
       tokenDecimals: 7,
       tokenSymbol: "USDC",
-      shareId: "CDDIUKPZ7IQMLQ4FL5BSBREE5EJBTL6GV7AVQ63A5LDYOQVL57SLSKUO",
+      shareId: "CCZXWZIEUFSDHINYBS2NAVOOGG3U657EEXNGBUTIZAOMLFC2PYK6ZJDN",
       shareDecimals: 7,
       shareSymbol: "VST",
       apy: "0.0%",
